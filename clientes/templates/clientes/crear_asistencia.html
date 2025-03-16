@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-<title>FullGym</title>
+<title>EntrenamientosND/title>
 {% block title %}Crear asistencia{% endblock %}
 {% block content %}
 <style>
     body {
-        background: url('/static/images/nemesis4.jpg') no-repeat center center fixed;
-        background-size: cover;
+        background: url('/static/images/32.jpeg') no-repeat center center fixed;
+        background-size: 95%; /* Ajustar tamaño de la imagen para que no quede tan pegada */
+        background-position: center; /* Centrar la imagen */
         color: white;
         font-family: Arial, sans-serif;
     }
@@ -21,7 +22,7 @@
     }
 
     h2 {
-        color: #0ac70a;
+        color: #FFD700; /* Amarillo dorado */
         text-align: center;
     }
 
@@ -33,6 +34,7 @@
     label {
         font-weight: bold;
         margin-top: 10px;
+        color: #fff; /* Blanco */
     }
 
     input, select, textarea {
@@ -49,10 +51,10 @@
     }
 
     button {
-        background: #3b12f3;
+        background: #FFD700; /* Amarillo dorado */
         border: none;
         padding: 10px 20px;
-        color: white;
+        color: black;
         font-size: 16px;
         cursor: pointer;
         border-radius: 5px;
@@ -67,7 +69,7 @@
         text-align: center;
         font-size: 20px;
         margin-top: 20px;
-        color: #fa0000c0;
+        color: #FFD700; /* Amarillo dorado */
     }
 
     /* Diseño responsivo para pantallas pequeñas */
@@ -108,6 +110,7 @@
     }
 </style>
 
+
 <div class="container">
     <h2>Crear asistencia</h2>
     <form method="post">
@@ -119,7 +122,7 @@
         <button type="submit">Confirmar presente</button>
     </form>
     <div class="motivational">
-        "Tu segundo hogar."
+        "Tu cambio comienza con nosotros."
     </div>
 </div>
 

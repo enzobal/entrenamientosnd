@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 
+{% load static %}  
+
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+
 <div class="container mt-4">
     <div class="card shadow-lg p-4">
         <h2 class="text-center text-primary mb-4">Crear Nueva Rutina</h2>
@@ -30,8 +34,6 @@
                     {% endfor %}
                 </div>
             </div>
-
-
 
             <div class="text-center">
                 <button type="submit" class="btn btn-primary btn-lg">Guardar Rutina</button>

@@ -5,6 +5,7 @@ import qrcode
 from io import BytesIO
 from django.core.files import File
 
+
 # Create your models here.
 
 class Cliente(models.Model):
@@ -121,7 +122,7 @@ class Nota(models.Model):
     def __str__(self):
         return f"Nota creada el {self.fecha_creacion}"
 
-
+# ///////////////RUTINAS///////////////////////////7
 
 
 from django.db import models
@@ -155,7 +156,7 @@ class Rutina(models.Model):
     grupo = models.ForeignKey(Grupo, on_delete=models.SET_NULL, null=True, blank=True)
     subgrupo = models.ForeignKey(Subgrupo, on_delete=models.SET_NULL, null=True, blank=True)
     clientes = models.ManyToManyField(User, blank=True)
-    video_url = models.URLField(max_length=500, blank=True, null=True)  # Nuevo campo para el video
+    video_url = models.URLField(max_length=500, blank=True, null=True, default="https://i.ytimg.com/vi/2L1JXrI1qjg/hq720.jpg?sqp=-oaymwEnCNAFEJQDSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLCPz0G7m2RTAMBgwXMOpPQeiCSIbA")  # Nuevo campo para el video
     fecha_creacion = models.DateTimeField(default=now)  # Guarda la fecha de publicación
 
 
@@ -166,7 +167,7 @@ class Rutina(models.Model):
 
 
 
-
+# ////////////////////////////////////////////////////
 # para el pago en linea,: exibe cbu y  guarda comprobante
 from django.db import models
 from django.contrib.auth.models import User
@@ -178,3 +179,44 @@ class ComprobantePago(models.Model):
 
     def __str__(self):
         return f"Comprobante de {self.cliente.username} - {self.fecha_subida.strftime('%Y-%m-%d')}"
+
+
+
+
+# nutricion ////////////////////////////////////////////////////////////////////////
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class Categoria(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+    clientes = models.ManyToManyField(User, related_name='categorias_nutricion', blank=True)
+
+    def __str__(self):
+        return self.nombre
+
+    def get_clientes(self):
+        return ", ".join([cliente.username for cliente in self.clientes.all()])
+
+class Subcategoria(models.Model):
+    nombre = models.CharField(max_length=100)
+    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name='subcategorias')
+
+    def __str__(self):
+        return f"{self.nombre} ({self.categoria.nombre})"
+    
+
+from django.utils.timezone import now
+class PlanNutricional(models.Model):
+    nombre = models.CharField(max_length=255)
+    descripcion = models.TextField()
+    imagen = models.ImageField(upload_to='planes_nutricionales/', blank=True, null=True)
+    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
+    subcategoria = models.ForeignKey(Subcategoria, on_delete=models.SET_NULL, null=True,blank=True)
+    documento = models.FileField(upload_to='documentos_nutricion/', blank=True, null=True, default= "https://i.ytimg.com/vi/2L1JXrI1qjg/hq720.jpg?sqp=-oaymwEnCNAFEJQDSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLCPz0G7m2RTAMBgwXMOpPQeiCSIbA")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    clientes = models.ManyToManyField(User, blank=True)  # Agregado para asignar clientes a cada plan
+    video_url = models.URLField(max_length=500, blank=True, null=True)  # Nuevo campo para el video
+    def __str__(self):
+        return f"{self.nombre} - {self.subcategoria.nombre}"
+

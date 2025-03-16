@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}  
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+
+    <div class="container mt-4">
+        <h2>Administración de Planes Nutricionales</h2>
+
+        {% for categoria in categorias %}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0 d-flex justify-content-between align-items-center">
+                        <span>{{ categoria.nombre }}</span>
+                        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#categoria_{{ categoria.id }}" aria-expanded="false">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </h3>
+                </div>
+                <div id="categoria_{{ categoria.id }}" class="collapse">
+                    <div class="card-body">
+                        <form action="{% url 'eliminar_categoria' categoria.id %}" method="POST" onsubmit="return confirm('¿Eliminar esta categoría y sus subcategorías y planes nutricionales?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm mb-2">Eliminar Categoría</button>
+                        </form>
+
+                        {% for subcategoria in categoria.subcategorias.all %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-secondary text-white">
+                                    <h4 class="mb-0 d-flex justify-content-between align-items-center">
+                                        <span>{{ subcategoria.nombre }}</span>
+                                        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#subcategoria_{{ subcategoria.id }}">
+                                            <i class="bi bi-chevron-down"></i>
+                                        </button>
+                                    </h4>
+                                </div>
+                                <div id="subcategoria_{{ subcategoria.id }}" class="collapse">
+                                    <div class="card-body">
+                                        <form action="{% url 'eliminar_subcategoria' subcategoria.id %}" method="POST" onsubmit="return confirm('¿Eliminar esta subcategoría y sus planes nutricionales?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm mb-2">Eliminar Subcategoría</button>
+                                        </form>
+
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Nombre</th>
+                                                        <th>Descripción</th>
+                                                        <th>Imagen</th>
+                                                        <th>Video</th>
+                                                        <th>Clientes Asignados</th>
+                                                        <th>Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for plan in subcategoria.plannutricional_set.all %}
+                                                        <tr>
+                                                            <td>{{ plan.nombre }}</td>
+                                                            <td>{{ plan.descripcion }}</td>
+                                                            <td>
+                                                                {% if plan.imagen %}
+                                                                    <img src="{{ plan.imagen.url }}" alt="Imagen de rutina" width="100">
+                                                                {% else %}
+                                                                    No hay imagen
+                                                                {% endif %}                                                            
+                                                            </td>
+                                                            <td>
+                                                                    {% if plan.video_url %}
+                                                                        {% if 'youtube.com' in plan.video_url or 'youtu.be' in plan.video_url %}
+                                                                            {% with plan.video_url|slice:"-11:" as video_id %}
+                                                                                <iframe width="150" height="100" src="https://www.youtube.com/embed/{{ video_id }}" allowfullscreen></iframe>
+                                                                            {% endwith %}
+                                                                        {% else %}
+                                                                            <video controls width="150">
+                                                                                <source src="{{ plan.video_url }}" type="video/mp4">
+                                                                                Tu navegador no soporta el video.
+                                                                            </video>
+                                                                        {% endif %}
+                                                                    {% else %}
+                                                                        No hay video
+                                                                    {% endif %}
+                                                            </td>
+                                                            <td>                                                                
+                                                                {% if plan.clientes.all %}
+                                                                    <ul>
+                                                                        {% for cliente in plan.clientes.all %}
+                                                                            <li>{{ cliente.username }}
+                                                                                <form action="{% url 'eliminar_cliente_de_plan' plan.id cliente.id %}" method="POST" style="display:inline;">
+                                                                                    {% csrf_token %}
+                                                                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                                                                </form>
+                                                                            </li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% else %}
+                                                                    Sin clientes asignados.
+                                                                {% endif %}
+                                                            </td>
+                                                            <td>
+                                                                <a href="{% url 'editar_plan_nutricional' plan.id %}" class="btn btn-secondary btn-sm">Editar</a>
+
+                                                                <form action="{% url 'asignar_cliente_a_plan_nutricional' plan.id %}" method="POST" style="display:inline;">
+                                                                    {% csrf_token %}
+                                                                    <select name="cliente_id" class="form-select form-select-sm">
+                                                                        {% for cliente in clientes %}
+                                                                            <option value="{{ cliente.id }}">{{ cliente.user.username }}</option>
+                                                                        {% empty %}
+                                                                            <option disabled>No hay clientes</option>
+                                                                        {% endfor %}
+                                                                    </select>
+                                                                    <button type="submit" class="btn btn-primary btn-sm">Asignar</button>
+                                                                </form>
+
+                                                                <form action="{% url 'eliminar_todos_clientes_de_plan_nutricional' plan.id %}" method="POST" style="display:inline;">
+                                                                    {% csrf_token %}
+                                                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar Todos</button>
+                                                                </form>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}

@@ -1,0 +1,76 @@
+
+body {
+    background: url("/static/images/logo.jpeg") no-repeat center center fixed;
+    background-size: cover;
+    font-family: "Arial", sans-serif;
+    color: #a81e1e;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #970909;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+th, td {
+    border: 2px solid #007BFF;
+    padding: 12px;
+    text-align: center;
+}
+
+th {
+    background-color: #007BFF;
+    color: white;
+    font-size: 16px;
+}
+
+td {
+    background-color: #968f8f;
+    font-size: 14px;
+}
+
+tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+a {
+    text-decoration: none;
+    background-color: #28a745;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+a:hover {
+    background-color: #218838;
+}
+
+img {
+        border-radius: 8px;
+        border: 2px solid #007BFF;
+        cursor: pointer;
+        transition: transform 0.2s;
+        max-width: 150px;
+}
+
+img:hover {
+        transform: scale(1.1);
+    }
+
+h2 {
+    text-align: center;
+    color: #1a0801;
+    font-size: 24px;
+}
+
+iframe, video {
+        width: 200px;
+        height: 120px;
+        border-radius: 8px;
+        border: 2px solid #007BFF;
+    }

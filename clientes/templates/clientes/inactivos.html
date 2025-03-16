@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Agrega Bootstrap si no lo tienes -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
 <style>
@@ -15,29 +14,23 @@
         max-width: 900px;
         width: 95%;
     }
-
     .table-container {
-        overflow-x: auto; /* Hace la tabla desplazable en móviles */
+        overflow-x: auto;
     }
-
     table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 20px;
-        white-space: nowrap; /* Evita que se rompa en móviles */
     }
-
     th, td {
         padding: 10px;
         border: 1px solid #ffffff;
         text-align: left;
     }
-
     th {
         background-color: #ff0000;
         color: white;
     }
-
     .btn-contact {
         text-decoration: none;
         padding: 8px 15px;
@@ -48,25 +41,20 @@
         text-align: center;
         width: 100px;
     }
-
     .btn-success {
         background-color: #25D366;
     }
-
     .btn-primary {
         background-color: #007BFF;
     }
-
-    /* Estilos Responsivos */
     @media (max-width: 768px) {
         .inactive-container {
             padding: 15px;
             font-size: 14px;
         }
-
         .btn-contact {
             width: 100%;
-            display: block; /* Hace que los botones ocupen el ancho en móviles */
+            display: block;
         }
     }
 </style>
@@ -75,14 +63,14 @@
     <h1>Clientes Inactivos</h1>
     <p>A continuación, se listan los clientes que no han pagado en 2 meses o no han asistido en 1 mes.</p>
 
-    <!-- Input de búsqueda -->
     <input type="text" id="buscador" class="form-control mb-3" placeholder="Buscar cliente..." onkeyup="filtrarClientes()">
 
     {% if clientes_inactivos %}
-        <div class="table-container">
+        <div class="table-container table-responsive">
             <table class="table table-striped" id="tablaClientes">
                 <thead>
                     <tr>
+                        <th>Usuario</th>
                         <th>Nombre</th>
                         <th>Teléfono</th>
                         <th>Email</th>
@@ -93,19 +81,20 @@
                 <tbody>
                     {% for cliente in clientes_inactivos %}
                     <tr>
+                        <td>{{ cliente.user }}</td>
                         <td>{{ cliente.nombre }} {{ cliente.apellido }}</td>
-                        <td>{{ cliente.numero_celular }}</td>
+                        <td>+549{{ cliente.numero_celular|slice:"-10:" }}</td>
                         <td>{{ cliente.email }}</td>
                         <td>{{ cliente.motivo_inactividad }}</td>
                         <td>
                             {% if cliente.numero_celular %}
-                                <a href="https://api.whatsapp.com/send?phone={{ cliente.numero_celular }}&text=Hola%20{{ cliente.nombre }},%20te%20ofrecemos%20un%2050%25%20de%20descuento%20en%20tu%20cuota%20mensual%20para%20que%20regreses!" 
-                                   target="_blank" class="btn btn-success btn-contact">WhatsApp</a>
+                            <a href="https://api.whatsapp.com/send?phone=+549{{ cliente.numero_celular|slice:'-10:' }}&text={{ 'Hola '|add:cliente.nombre|add:', te ofrecemos un 50% de descuento en tu cuota mensual para que regreses!'|urlencode }}" 
+                                target="_blank" class="btn btn-success btn-contact">WhatsApp</a>
                             {% endif %}
                             
                             {% if cliente.email %}
-                                <a href="mailto:{{ cliente.email }}?subject=Oferta%20Especial&body=Hola%20{{ cliente.nombre }},%20te%20ofrecemos%20un%2050%25%20de%20descuento%20en%20tu%20cuota%20mensual%20para%20que%20regreses!" 
-                                   class="btn btn-primary btn-contact">Email</a>
+                            <a href="mailto:{{ cliente.email }}?subject={{ 'Oferta Especial'|urlencode }}&body={{ 'Hola '|add:cliente.nombre|add:', te ofrecemos un 50% de descuento en tu cuota mensual para que regreses!'|urlencode }}" 
+                                class="btn btn-primary btn-contact">Email</a>
                             {% endif %}
                         </td>
                     </tr>
@@ -118,14 +107,13 @@
     {% endif %}
 </div>
 
-<!-- Script de búsqueda -->
 <script>
     function filtrarClientes() {
         let input = document.getElementById("buscador").value.toLowerCase();
         let filas = document.querySelectorAll("#tablaClientes tbody tr");
 
         filas.forEach(fila => {
-            let textoFila = fila.innerText.toLowerCase();
+            let textoFila = fila.textContent.toLowerCase();
             fila.style.display = textoFila.includes(input) ? "" : "none";
         });
     }

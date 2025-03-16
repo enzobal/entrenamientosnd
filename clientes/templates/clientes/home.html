@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+
 {% load static %}
 
-<title>NEMESIS</title>
+<title>ND Entrenamiento</title>
 
 {% block content %}
 <style>
@@ -9,42 +10,42 @@
         background: url("/static/images/nemesis3.jpg") no-repeat center center fixed;
         background-size: cover;
         font-family: Arial, sans-serif;
-        color: #ffffff;
+        color: #000000; /* Texto principal en negro */
     }
 
     .welcome-container {
         margin: 40px auto;
         padding: 20px;
-        background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(50, 50, 50, 0.8));
+        background: linear-gradient(135deg, rgba(255, 255, 0, 0.9), rgba(200, 200, 0, 0.8));
         border-radius: 15px;
         text-align: center;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
         max-width: 800px;
-        border: 2px solid #ff0000;
+        border: 3px solid #000000; /* Borde en negro */
         position: relative;
     }
 
     h1 {
         font-size: 40px;
         font-weight: bold;
-        text-shadow: 3px 3px 8px rgba(0, 0, 0, 1), 0 0 10px #ff0000;
-        color: #ff0000;
+        text-shadow: 3px 3px 8px rgba(0, 0, 0, 1);
+        color: #000000; /* Negro */
         padding: 10px;
         display: inline-block;
         border-radius: 10px;
-        background: rgba(46, 41, 41, 0.6);
+        background: rgba(255, 255, 255, 0.6);
     }
 
     h2 {
         font-size: 32px;
         text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);
-        color: #ff4500;
+        color: #000000;
     }
 
     p {
         font-size: 20px;
         text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
-        color: #ffffff;
+        color: #000000;
     }
 
     .btn-main {
@@ -52,7 +53,7 @@
         text-decoration: none;
         padding: 15px 30px;
         color: #ffffff;
-        background: #ff4500;
+        background: #000000;
         border-radius: 10px;
         font-size: 20px;
         font-weight: bold;
@@ -62,33 +63,29 @@
     }
 
     .btn-main:hover {
-        background: #cc3700;
+        background: #ffdd00;
+        color: #000000;
         transform: scale(1.1);
     }
 
     .aranceles {
         margin-top: 15px;
         padding: 15px;
-        background: rgba(255, 0, 0, 0.2);
-        border: 2px solid #ff0000;
+        background: rgba(0, 0, 0, 0.2);
+        border: 3px solid #000000;
         border-radius: 8px;
         font-size: 18px;
         font-weight: bold;
         text-align: left;
     }
-
-    .aranceles p {
-        margin: 5px 0;
-        color: #ff0000;
-    }
 </style>
 
 <div class="welcome-container">
     <h1>Bienvenido al Gimnasio {{ user.username }}</h1>
-    <h2>#NEMESIS</h2>
+    <h2>#ND Entrenamientos</h2>
 
     {% if user.is_authenticated %}
-        <p>¡Es genial que seas parte de nosotros, {{ user.username }}!  
+        <p>¡Tu Cambio Comienza Aquí {{ user.username }}! <br><br>
         POR FAVOR RECORDÁ EDITAR TU PERFIL</p>
 
         {% if ultimo_pago %}
@@ -101,15 +98,11 @@
             <p>No tienes pagos registrados.</p>
         {% endif %}
         
-        <!-- Sección de Aranceles -->
         <div class="aranceles">
             <p>🔹 <strong>Aranceles</strong></p>
             <p>💰 Del 1 al 10, importe: <strong>$25.000</strong></p>
             <p>⚠️ Pasado el 10, importe: <strong>$30.000</strong></p>
-                <!-- Botón para abonar la cuota mensual -->
-            <td>
-                <a href="{% url 'pago_cuota_enlinea' %}" class="btn-main">Para abonar tu cuota mensual, haz clic aquí</a>
-            </td>
+            <a href="{% url 'pago_cuota_enlinea' %}" class="btn-main">Para abonar tu cuota mensual, haz clic aquí</a>
         </div>
 
         {% if user.is_staff %}

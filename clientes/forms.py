@@ -64,6 +64,7 @@ class PagoForm(forms.ModelForm):
             raise ValidationError('La fecha de pago no puede ser anterior a la fecha de inicio.')
         return fecha_pago
 
+# ///////////////////////////RUTINAS////////////////////
 
 from django import forms
 from .models import Rutina, Grupo, Subgrupo
@@ -119,3 +120,50 @@ class ComprobantePagoForm(forms.ModelForm):
     class Meta:
         model = ComprobantePago
         fields = ['archivo']
+
+# ////////////////////////////////////nutricion grupos
+
+from django import forms
+from .models import PlanNutricional, Categoria, Subcategoria
+
+class CategoriaForm(forms.ModelForm):
+    class Meta:
+        model = Categoria
+        fields = ['nombre']
+
+class SubcategoriaForm(forms.ModelForm):
+    class Meta:
+        model = Subcategoria
+        fields = ['nombre', 'categoria']
+
+class PlanNutricionalForm(forms.ModelForm):
+    class Meta:
+        model = PlanNutricional
+        fields = ['nombre', 'descripcion', 'imagen', 'categoria', 'subcategoria', 'documento', 'video_url']
+        widgets = {
+            'descripcion': forms.Textarea(attrs={'cols': 40, 'rows': 5}),
+        }
+
+    categoria_nueva = forms.CharField(max_length=100, required=False, label="Nueva Categoría")
+    subcategoria_nueva = forms.CharField(max_length=100, required=False, label="Nueva Subcategoría")
+
+    def save(self, commit=True):
+        categoria = self.cleaned_data.get('categoria')
+        subcategoria = self.cleaned_data.get('subcategoria')
+        categoria_nueva = self.cleaned_data.get('categoria_nueva')
+        subcategoria_nueva = self.cleaned_data.get('subcategoria_nueva')
+
+        if categoria_nueva:
+            categoria, created = Categoria.objects.get_or_create(nombre=categoria_nueva)
+        if subcategoria_nueva:
+            subcategoria, created = Subcategoria.objects.get_or_create(nombre=subcategoria_nueva, categoria=categoria)
+
+        plan_nutricional = super().save(commit=False)
+        plan_nutricional.categoria = categoria
+        plan_nutricional.subcategoria = subcategoria
+
+        if commit:
+            plan_nutricional.save()
+        return plan_nutricional
+
+

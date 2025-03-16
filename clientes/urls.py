@@ -1,9 +1,11 @@
 from django.urls import path
 
-from . import views
+
 from django.contrib.auth import views as auth_views
 from .views import vencimientos_pagos
 from .views import pago_cuota_enlinea, eliminar_comprobante, eliminar_comprobante, listar_comprobantes
+from .views import listar_qr_clientes
+from . import views
 
 urlpatterns = [
     path('index', views.index, name='index'),
@@ -37,6 +39,7 @@ urlpatterns = [
     path('editar/<int:cliente_id>/', views.editar_cliente, name='editar_cliente'),
     path('eliminar/<int:cliente_id>/', views.eliminar_cliente, name='eliminar_cliente'),
     path("escanear_qr/", views.escanear_qr, name="escanear_qr"),
+    path('listar_qr/', listar_qr_clientes, name='listar_qr_clientes'),
 
     path('registrar_asistencia_qr/', views.registrar_asistencia_qr, name='registrar_asistencia_qr'),
     path('generar_qr/<int:cliente_id>/', views.generar_qr, name='generar_qr'),
@@ -59,5 +62,17 @@ urlpatterns = [
     path('eliminar_cliente_de_rutina/<int:rutina_id>/<int:cliente_id>/', views.eliminar_cliente_de_rutina, name='eliminar_cliente_de_rutina'),
     path('eliminar_grupo/<int:grupo_id>/', views.eliminar_grupo, name='eliminar_grupo'),
     path('eliminar_subgrupo/<int:subgrupo_id>/', views.eliminar_subgrupo, name='eliminar_subgrupo'),
+    # nutricion
+    path('listar-planes-nutricionales/', views.listar_planes_nutricionales, name='listar_planes_nutricionales'),
+    path("mi-plan-nutricional/", views.mi_plan_nutricional, name="mi_plan_nutricional"),
+    
+    path('editar-plan-nutricional/<int:plan_nutricional_id>/', views.editar_plan_nutricional, name='editar_plan_nutricional'),
+    path('crear-plan-nutricional/', views.crear_plan_nutricional, name='crear_plan_nutricional'),
+    path("asignar_cliente_a_plan_nutricional/<int:plan_nutricional_id>/", views.asignar_cliente_a_plan_nutricional, name="asignar_cliente_a_plan_nutricional"),
+    path('eliminar-todos-clientes-de-plan-nutricional/<int:plan_nutricional_id>/', views.eliminar_todos_clientes_de_plan_nutricional, name='eliminar_todos_clientes_de_plan_nutricional'),
+    path('eliminar_cliente_de_plan_nutricional/<int:plan_nutricional_id>/<int:cliente_id>/', views.eliminar_cliente_de_plan_nutricional, name='eliminar_cliente_de_plan_nutricional'),
+    path('eliminar_categoria/<int:id>/', views.eliminar_categoria, name='eliminar_categoria'),
+    path('eliminar_subcategoria/<int:subcategoria_id>/', views.eliminar_subcategoria, name='eliminar_subcategoria'),
+    path('eliminar_cliente_de_plan/<int:plan_id>/<int:cliente_id>/', views.eliminar_cliente_de_plan, name='eliminar_cliente_de_plan'),
 
 ]

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% load static %}  
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+
+
+<div class="container">
+    <h2>Editar Plan de Nutrición: {{ nutricion.nombre }}</h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        {% if nutricion.imagen %}
+            <p><strong>Imagen actual:</strong></p>
+            <img src="{{ nutricion.imagen.url }}" alt="Imagen del plan de nutrición" width="150">
+        {% endif %}
+
+        {% if nutricion.video_url %}
+            <p><strong>Video actual:</strong></p>
+            {% if 'youtube.com' in nutricion.video_url or 'youtu.be' in nutricion.video_url %}
+                {% with nutricion.video_url|slice:"-11:" as video_id %}
+                    <iframe width="300" height="180" src="https://www.youtube.com/embed/{{ video_id }}?rel=0" allowfullscreen></iframe>
+                {% endwith %}
+            {% else %}
+                <video controls width="300">
+                    <source src="{{ nutricion.video_url }}" type="video/mp4">
+                    Tu navegador no soporta el video.
+                </video>
+            {% endif %}
+        {% endif %}
+
+        <button type="submit">Guardar Cambios</button>
+    </form>
+
+    <a href="{% url 'listar_planes_nutricionales' %}">Volver al listado</a>
+</div>
+{% endblock %}

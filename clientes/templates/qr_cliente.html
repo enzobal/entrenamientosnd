@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="text-center">QR de {{ cliente.nombre }} {{ cliente.apellido }}</h1>
+    <h1 class="text-center">QR de {{ cliente.nombre }} {{ cliente.apellido }} {{ cliente.user}}</h1>
     <p class="text-center">Este código QR representa la información de este cliente.</p>
     <div class="text-center">
         <img src="{{ qr_code_url }}" alt="QR Code del cliente" class="img-fluid" style="max-width: 300px; border: 2px solid #ccc; padding: 10px;">

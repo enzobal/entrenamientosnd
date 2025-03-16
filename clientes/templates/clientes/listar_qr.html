@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}  
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+
+<div class="container">
+    <h2 class="mt-4">Listado de Códigos QR de Clientes</h2>
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>QR</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+                <tr>
+                    <td>{{ cliente.nombre }}</td>
+                    <td>{{ cliente.apellido }}</td>
+                    <td>
+                        {% if cliente.qr_code %}
+                            <img src="{{ cliente.qr_code.url }}" alt="QR de {{ cliente.nombre }}" width="100"
+                                class="qr-thumbnail" data-bs-toggle="modal" data-bs-target="#qrModal"
+                                data-qr-url="{{ cliente.qr_code.url }}">
+                        {% else %}
+                            <span class="text-muted">No disponible</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if cliente.qr_code %}
+                            <a href="{{ cliente.qr_code.url }}" download="QR_{{ cliente.nombre }}.png" class="btn btn-success btn-sm">Descargar</a>
+                            <button class="btn btn-primary btn-sm" onclick="imprimirQR('{{ cliente.qr_code.url }}')">Imprimir</button>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal para mostrar QR ampliado -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qrModalLabel">Código QR</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="qrModalImage" src="" class="img-fluid" alt="Código QR ampliado">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para el modal y la impresión -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const qrThumbnails = document.querySelectorAll(".qr-thumbnail");
+        const qrModalImage = document.getElementById("qrModalImage");
+
+        qrThumbnails.forEach(img => {
+            img.addEventListener("click", function() {
+                qrModalImage.src = this.getAttribute("data-qr-url");
+            });
+        });
+    });
+
+    function imprimirQR(qrUrl) {
+    let ventana = window.open('', '', 'width=600,height=600');
+
+    ventana.document.write('<html><head><title>Imprimir QR</title></head><body style="text-align:center;">');
+    ventana.document.write('<img id="qrImage" src="' + qrUrl + '" style="width:80%; max-width:400px;">');
+    ventana.document.write('</body></html>');
+
+    ventana.document.close();
+
+    // Esperamos a que la imagen cargue completamente antes de imprimir
+    ventana.onload = function () {
+        setTimeout(() => {
+            ventana.print();
+        }, 500); // Espera medio segundo antes de ejecutar print()
+    };
+}
+
+</script>
+
+{% endblock %}

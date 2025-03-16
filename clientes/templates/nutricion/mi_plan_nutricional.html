@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}  
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+
+
+<h2 style="color: rgb(241, 14, 128);">Planes Nutricionales</h2>
+
+{% if planes %}
+    <table>
+        <tr>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Descargar Descripción</th>
+            <th>Imagen</th>
+            <th>Descargar Imagen</th>
+            <th>Video</th>
+            <th>Ver Video</th>
+        </tr>
+        {% for planes in planes %}
+            <tr>
+                <td>{{ planes.nombre }}</td>
+                <td>{{ planes.descripcion }}</td>
+                <td>
+                    {% if planes.descripcion %}
+                        <a href="data:text/plain;charset=utf-8,{{ planes.descripcion|urlencode }}"
+                            download="{{ planes.nombre }}_descripcion.txt">Descargar</a>
+                    {% else %}
+                        No disponible
+                    {% endif %}
+                </td>
+                <td>
+                    {% if planes.imagen %}
+                        <img src="{{ planes.imagen.url }}" alt="Imagen de planes nutricional" width="100">
+                    {% else %}
+                        No hay imagen
+                    {% endif %}
+                </td>
+                <td>
+                    {% if planes.imagen %}
+                        <a href="{{ planes.imagen.url }}" download="{{ planes.nombre }}_imagen.jpg">Descargar</a>
+                    {% else %}
+                        No disponible
+                    {% endif %}
+                </td>
+                <td>
+                    {% if planes.video_url %}
+                        {% if 'youtube.com' in planes.video_url or 'youtu.be' in planes.video_url %}
+                            <!-- Extraer ID del video correctamente -->
+                            {% with planes.video_url|slice:"-11:" as video_id %}
+                                <iframe 
+                                    width="200" height="120"
+                                    src="https://www.youtube.com/embed/{{ video_id }}?rel=0" 
+                                    allowfullscreen>
+                                </iframe>
+                            {% endwith %}
+                        {% else %}
+                            <!-- Video subido manualmente -->
+                            <video controls width="200">
+                                <source src="{{ planes.video_url }}" type="video/mp4">
+                                Tu navegador no soporta el video.
+                            </video>
+                        {% endif %}
+                    {% else %}
+                        No disponible
+                    {% endif %}
+                </td>
+                <td>
+                    {% if planes.video_url %}
+                        <a href="{{ planes.video_url }}" target="_blank">Ver Video</a>
+                    {% else %}
+                        No disponible
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p style="text-align: center; font-size: 18px; color: #555;">No tienes ningún planes nutricional asignado.</p>
+{% endif %}
+
+{% endblock %}

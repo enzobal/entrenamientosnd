@@ -255,6 +255,14 @@ def listar_inactivos(request):
     })
 
 
+#  listará los QR DE LOS CLIENTES
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import render
+from .models import Cliente
+
+def listar_qr_clientes(request):
+    clientes = Cliente.objects.all()
+    return render(request, 'clientes/listar_qr.html', {'clientes': clientes})
 
 
 
@@ -315,6 +323,7 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def listar_asistencias(request):
+    clientes = Cliente.objects.all()
     hoy = date.today()  # Fecha actual
     page_number = request.GET.get('page', 1)  # Número de página desde la URL
 
@@ -928,6 +937,7 @@ def listar_comprobantes(request):
 # //////////////////////////////////////////////////////////
 
 
+from django.shortcuts import render, get_object_or_404
 
 from django.shortcuts import render, redirect
 from .models import Rutina, Cliente
@@ -1091,12 +1101,166 @@ def eliminar_subgrupo(request, subgrupo_id):
 
 
 
+# //////////////////////////////nutricion////////////////////////
 
 
 
+from django.shortcuts import render, redirect
+from .models import PlanNutricional, Cliente
+from .forms import PlanNutricionalForm
+
+def crear_plan_nutricional(request):
+    if request.method == "POST":
+        form = PlanNutricionalForm(request.POST, request.FILES)
+        if form.is_valid():
+            plan_nutricional = form.save(commit=False)  # Guardamos el plan, pero sin confirmarlo en la BD
+            plan_nutricional.save()  # Ahora lo guardamos en la base de datos
+
+            # Obtener los IDs de los clientes seleccionados en el formulario
+            cliente_ids = request.POST.getlist("cliente_ids")
+
+            # Asignar los clientes al plan nutricional
+            clientes = User.objects.filter(cliente__id__in=cliente_ids)  # Buscar el User asociado al Cliente
+            plan_nutricional.clientes.add(*clientes)  # Ahora asignamos correctamente los usuarios
+
+            return redirect("listar_planes_nutricionales")  # Redirigir al listado de planes nutricionales después de guardar
+    else:
+        form = PlanNutricionalForm()
+
+    # Pasamos los clientes disponibles al template
+    clientes = Cliente.objects.all()
+    
+    return render(request, "nutricion/crear_plan_nutricional.html", {"form_nutricion": form, "clientes": clientes})
 
 
 
+from django.shortcuts import render
+from .models import PlanNutricional, Cliente, Categoria
+
+@login_required
+def listar_planes_nutricionales(request):
+    categorias = Categoria.objects.prefetch_related("subcategorias__plannutricional_set").all()
+
+    clientes = Cliente.objects.all()  # Obtener todos los clientes
+    planes = PlanNutricional.objects.all()
+
+    return render(request, "nutricion/listar_planes_nutricionales.html",{"categorias": categorias, "clientes": clientes})
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import PlanNutricional
+
+@login_required
+def mi_plan_nutricional(request):
+    usuario = request.user
+    planes = PlanNutricional.objects.filter(clientes=usuario).order_by('-fecha_creacion')  # Lo más reciente primero
+
+    return render(request, "nutricion/mi_plan_nutricional.html", {"planes": planes})
+
+
+from django.shortcuts import get_object_or_404, redirect
+from .forms import PlanNutricionalForm
+from .models import PlanNutricional
+
+def editar_plan_nutricional(request, plan_nutricional_id):
+    plan_nutricional = get_object_or_404(PlanNutricional, id=plan_nutricional_id)
+
+    if request.method == "POST":
+        form = PlanNutricionalForm(request.POST, request.FILES, instance=plan_nutricional)
+        if form.is_valid():
+            form.save()
+            return redirect("listar_planes_nutricionales")
+    else:
+        form = PlanNutricionalForm(instance=plan_nutricional)
+
+    return render(request, "nutricion/editar_plan_nutricional.html", {"form": form, "plan_nutricional": plan_nutricional})
+
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from .models import PlanNutricional, Cliente
+
+def asignar_cliente_a_plan_nutricional(request, plan_nutricional_id):
+    if request.method == "POST":
+        plan_nutricional = get_object_or_404(PlanNutricional, id=plan_nutricional_id)
+        cliente_id = request.POST.get("cliente_id")
+        cliente = get_object_or_404(Cliente, id=cliente_id)
+        
+        plan_nutricional.clientes.add(cliente.user)
+        messages.success(request, f"Cliente {cliente.nombre} asignado al plan nutricional {plan_nutricional.nombre}.")
+        
+    return redirect("listar_planes_nutricionales")
+
+from django.shortcuts import get_object_or_404, redirect
+from .models import PlanNutricional
+
+def eliminar_todos_clientes_de_plan_nutricional(request, plan_nutricional_id):
+    plan_nutricional = get_object_or_404(PlanNutricional, id=plan_nutricional_id)
+    plan_nutricional.clientes.clear()
+    
+    return redirect('listar_planes_nutricionales')
+
+from django.shortcuts import get_object_or_404, redirect
+from .models import PlanNutricional, Cliente
+
+def eliminar_cliente_de_plan_nutricional(request, plan_nutricional_id, cliente_id):
+    plan_nutricional = get_object_or_404(PlanNutricional, id=plan_nutricional_id)
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+
+    # Elimina el usuario de la lista de clientes del plan nutricional
+    plan_nutricional.clientes.remove(cliente.user)
+    return redirect('listar_planes_nutricionales')
+
+
+from django.shortcuts import get_object_or_404, redirect
+from .models import PlanNutricional, Cliente
+
+def eliminar_cliente_de_plan(request, plan_id, cliente_id):
+    # Obtén el plan nutricional y el cliente correspondiente
+    plan = get_object_or_404(PlanNutricional, id=plan_id)
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+
+    # Obtén el usuario asociado al cliente
+    user = cliente.user  # Este es el objeto User relacionado con Cliente
+
+    # Elimina el usuario del plan nutricional
+    plan.clientes.remove(user)
+    return redirect('listar_planes_nutricionales')  # Asegúrate de tener esta vista en tus URLs
+
+
+
+# elimina ctegorias
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Categoria, Subcategoria
+
+@login_required
+def eliminar_categoria(request, id):
+    categoria = get_object_or_404(Categoria, id=id)
+
+    # Eliminar todas las relaciones de subcategorías y planes nutricionales
+    categoria.subcategoria_set.all().delete()  # Eliminar subcategorías asociadas
+    categoria.plan_nutricional_set.all().delete()  # Si hay planes asociados a la categoría
+
+    # Finalmente, eliminar la categoría
+    categoria.delete()
+    
+    return redirect('listar_planes_nutricionales')  # Redirigir a la lista de planes
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Subcategoria  # Asegúrate de importar el modelo correcto
+
+@login_required
+def eliminar_subcategoria(request, subcategoria_id):
+    subcategoria = get_object_or_404(Subcategoria, id=subcategoria_id)
+    
+    # Eliminar todos los planes nutricionales asociados a la subcategoría
+    subcategoria.plannutricional_set.all().delete()
+
+    # Eliminar la subcategoría
+    subcategoria.delete()
+    return redirect('listar_planes_nutricionales')  # Redirigir a la vista de planes
 
 
 
