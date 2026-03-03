@@ -40,32 +40,38 @@ urlpatterns = [
     path('eliminar/<int:cliente_id>/', views.eliminar_cliente, name='eliminar_cliente'),
     path("escanear_qr/", views.escanear_qr, name="escanear_qr"),
     path('listar_qr/', listar_qr_clientes, name='listar_qr_clientes'),
+    path('escanear-rapido/', views.escanear_qr_rapido, name='escanear_qr_rapido'),
 
     path('registrar_asistencia_qr/', views.registrar_asistencia_qr, name='registrar_asistencia_qr'),
     path('generar_qr/<int:cliente_id>/', views.generar_qr, name='generar_qr'),
     path('estado_cuota/<int:cliente_id>/', views.estado_cuota, name='estado_cuota'),
     path('vencimientos/', vencimientos_pagos, name='vencimientos_pagos'),
-    
+
     path('listar_rutinas/', views.listar_rutinas, name='listar_rutinas'),
-    
+
     path('pago_en_linea/', pago_cuota_enlinea, name='pago_cuota_enlinea'),
-    
     path('eliminar_comprobante/<int:comprobante_id>/', eliminar_comprobante, name='eliminar_comprobante'),
     path('listar_comprobantes/', listar_comprobantes, name='listar_comprobantes'),
+
+
     path('listar-rutinas/', views.listar_rutinas, name='listar_rutinas'),
     path("mi-rutina/", views.mi_rutina, name="mi_rutina"),
-    
+
     path('editar-rutina/<int:rutina_id>/', views.editar_rutina, name='editar_rutina'),
     path('crear_rutina/', views.crear_rutina, name='crear_rutina'),
     path("asignar_cliente_a_rutina/<int:rutina_id>/", views.asignar_cliente_a_rutina, name="asignar_cliente_a_rutina"),
     path('eliminar-todos-clientes-de-rutina/<int:rutina_id>/', views.eliminar_todos_clientes_de_rutina, name='eliminar_todos_clientes_de_rutina'),
     path('eliminar_cliente_de_rutina/<int:rutina_id>/<int:cliente_id>/', views.eliminar_cliente_de_rutina, name='eliminar_cliente_de_rutina'),
     path('eliminar_grupo/<int:grupo_id>/', views.eliminar_grupo, name='eliminar_grupo'),
+    path('rutina/eliminar/<int:rutina_id>/', views.eliminar_rutina, name='eliminar_rutina'),
+
+
     path('eliminar_subgrupo/<int:subgrupo_id>/', views.eliminar_subgrupo, name='eliminar_subgrupo'),
     # nutricion
     path('listar-planes-nutricionales/', views.listar_planes_nutricionales, name='listar_planes_nutricionales'),
     path("mi-plan-nutricional/", views.mi_plan_nutricional, name="mi_plan_nutricional"),
-    
+    path('cuota-vencida/', views.cuota_vencida, name='cuota_vencida'),
+
     path('editar-plan-nutricional/<int:plan_nutricional_id>/', views.editar_plan_nutricional, name='editar_plan_nutricional'),
     path('crear-plan-nutricional/', views.crear_plan_nutricional, name='crear_plan_nutricional'),
     path("asignar_cliente_a_plan_nutricional/<int:plan_nutricional_id>/", views.asignar_cliente_a_plan_nutricional, name="asignar_cliente_a_plan_nutricional"),
@@ -74,5 +80,6 @@ urlpatterns = [
     path('eliminar_categoria/<int:id>/', views.eliminar_categoria, name='eliminar_categoria'),
     path('eliminar_subcategoria/<int:subcategoria_id>/', views.eliminar_subcategoria, name='eliminar_subcategoria'),
     path('eliminar_cliente_de_plan/<int:plan_id>/<int:cliente_id>/', views.eliminar_cliente_de_plan, name='eliminar_cliente_de_plan'),
+
 
 ]

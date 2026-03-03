@@ -2,21 +2,25 @@
 
 {% load static %}
 
-<title>ND Entrenamiento</title>
+<title>Bum Bum Fitnes Fem</title>
 
 {% block content %}
 <style>
-    body {
-        background: url("/static/images/nemesis3.jpg") no-repeat center center fixed;
-        background-size: cover;
-        font-family: Arial, sans-serif;
-        color: #000000; /* Texto principal en negro */
-    }
+body {
+    background: url("/static/images/boom.jpg") no-repeat center 30% fixed;
+    background-size: 50%;
+    font-family: Arial, sans-serif;
+    color: #000000;
+    background-position: center 2001%;
+
+}
+
+
 
     .welcome-container {
         margin: 40px auto;
         padding: 20px;
-        background: linear-gradient(135deg, rgba(255, 255, 0, 0.9), rgba(200, 200, 0, 0.8));
+        background: linear-gradient(135deg, rgba(255, 0, 55, 0.9), rgba(200, 200, 0, 0.8));
         border-radius: 15px;
         text-align: center;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
@@ -78,14 +82,45 @@
         font-weight: bold;
         text-align: left;
     }
+
+/* del titulo bienvenidos bum bum */
+.titulo-bienvenida {
+    text-align: center;
+    color: white;
+    margin-top: 40px;
+    line-height: 1.2;
+}
+
+.nombre-gym {
+    display: block;
+    font-size: 3.2rem;            /* BIEN GRANDE */
+    font-weight: 900;
+    color: #ff6a00;               /* naranja fuerte */
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+    margin-top: 10px;
+    letter-spacing: 1px;
+}
+
+.usuario {
+    display: block;
+    font-size: 1.9rem;
+    color: #ffd3a0;
+    margin-top: 7px;
+}
+
 </style>
 
 <div class="welcome-container">
-    <h1>Bienvenido al Gimnasio {{ user.username }}</h1>
-    <h2>#ND Entrenamientos</h2>
+    <h1 class="titulo-bienvenida">
+    Bienvenido al Gimnasio
+    <span class="nombre-gym">Bum Bum Fitnes Fem</span>
+    <span class="usuario">{{ user.username }}</span>
+</h1>
+
+    
 
     {% if user.is_authenticated %}
-        <p>¡Tu Cambio Comienza Aquí {{ user.username }}! <br><br>
+        <p>¡Tu Cambio Comienza Aquí !! <br><br>
         POR FAVOR RECORDÁ EDITAR TU PERFIL</p>
 
         {% if ultimo_pago %}
@@ -97,11 +132,12 @@
         {% else %}
             <p>No tienes pagos registrados.</p>
         {% endif %}
-        
+
         <div class="aranceles">
             <p>🔹 <strong>Aranceles</strong></p>
-            <p>💰 Del 1 al 10, importe: <strong>$25.000</strong></p>
-            <p>⚠️ Pasado el 10, importe: <strong>$30.000</strong></p>
+            <p>💰 Del 1 al 10 Clase Grupal, importe: <strong>$30.000</strong></p>
+            <p>💰 Del 1 al 10 Entrenamineto Personalizado, importe: <strong>$30.000</strong></p>
+            <p>⚠️ Pasado el 10,El importe tendrà un recargo del : <strong>20%</strong></p>
             <a href="{% url 'pago_cuota_enlinea' %}" class="btn-main">Para abonar tu cuota mensual, haz clic aquí</a>
         </div>
 
@@ -115,5 +151,23 @@
         </p>
     {% endif %}
 </div>
+
+<!--saludo de cumpleaños-->
+{% if cumpleanieros %}
+<div style="position: fixed; bottom: 20px; right: 20px; background: #ffdd00; color: black; padding: 15px 25px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 1000; animation: flotar 2s infinite alternate;">
+    <strong>🎉 ¡Hoy celebramosel cumpleaños de:</strong><br>
+    {% for cumple in cumpleanieros %}
+        {{ cumple.nombre }} {{ cumple.apellido }}, feliz cumple!!!<br>
+    {% endfor %}
+    🎂
+</div>
+
+<style>
+@keyframes flotar {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-10px); }
+}
+</style>
+{% endif %}
 
 {% endblock %}

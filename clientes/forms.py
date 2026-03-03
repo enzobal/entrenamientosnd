@@ -40,15 +40,30 @@ class AsistenciaForm(forms.ModelForm):
 
 from django.core.exceptions import ValidationError
 
+
+
 class PagoForm(forms.ModelForm):
+    cliente = forms.ModelChoiceField(
+        queryset=Cliente.objects.all(),
+        label="Cliente",
+        empty_label="Seleccione un cliente",
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
     class Meta:
         model = Pago
-        fields = ['cliente', 'importe', 'fecha_inicio','fecha_fin', 'fecha_pago']
+        fields = ['cliente', 'importe', 'fecha_inicio', 'fecha_fin', 'fecha_pago']
         widgets = {
             'fecha_inicio': forms.DateInput(attrs={'type': 'date'}),
             'fecha_fin': forms.DateInput(attrs={'type': 'date'}),
             'fecha_pago': forms.DateInput(attrs={'type': 'date'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].queryset = Cliente.objects.all()
+        self.fields['cliente'].label_from_instance = lambda obj: f"{obj.nombre} {obj.apellido} ({obj.user.username if obj.user else 'Sin usuario'})"
+
 
 
     def clean_importe(self):
@@ -166,4 +181,73 @@ class PlanNutricionalForm(forms.ModelForm):
             plan_nutricional.save()
         return plan_nutricional
 
+
+
+
+from django import forms
+from django.contrib.auth.models import User
+from .models import Cliente
+
+
+from django import forms
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from .models import Cliente
+
+
+class UserEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'username']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+
+class PasswordChangeCustomForm(forms.Form):
+    password_actual = forms.CharField(
+        label="Contraseña actual",
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        required=False
+    )
+    nueva_password = forms.CharField(
+        label="Nueva contraseña",
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        required=False,
+        validators=[validate_password]
+    )
+    confirmar_password = forms.CharField(
+        label="Confirmar nueva contraseña",
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        required=False
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        nueva = cleaned_data.get('nueva_password')
+        confirmar = cleaned_data.get('confirmar_password')
+        if nueva or confirmar:
+            if nueva != confirmar:
+                raise forms.ValidationError("Las contraseñas no coinciden.")
+        return cleaned_data
+
+
+
+
+class ClienteEditForm(forms.ModelForm):
+    class Meta:
+        model = Cliente
+        exclude = ['user', 'qr_code']  # no mostramos estos campos
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'apellido': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero_celular': forms.TextInput(attrs={'class': 'form-control'}),
+            'edad': forms.NumberInput(attrs={'class': 'form-control'}),
+            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'enfermedades': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'alergias': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
 

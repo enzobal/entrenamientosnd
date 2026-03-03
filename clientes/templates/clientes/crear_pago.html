@@ -1,14 +1,22 @@
 {% extends "base.html" %}
-<title>EntrenamientosND</title>
-{% block title %}Registrar Pago.{% endblock %}
-
-{% load static %}  
+<title>FullGym - Registrar Pago</title>
+{% block title %}Registrar Pago{% endblock %}
 
 {% block content %}
-
-
 <div class="container">
     <h2 class="page-title">Registrar Pago</h2>
+
+    <input
+    type="text"
+    id="buscarCliente"
+    placeholder="Buscar cliente por nombre o apellido..."
+    style="margin-bottom:15px; padding:10px; width:100%; border-radius:5px; border:1px solid #ddd;"
+>
+
+
+
+
+
     <div class="form-container">
         <form method="post" class="styled-form">
             {% csrf_token %}
@@ -16,19 +24,11 @@
             <button type="submit" class="btn-submit">Guardar</button>
         </form>
     </div>
-    
+
 
 </div>
 
 <style>
-body {
-    background: url("/static/images/26.jpg") no-repeat center center fixed;
-    background-size: cover;
-    font-family: "Arial", sans-serif;
-    color: #f0f0f0;
-}
-
-
 /* Estilos generales */
 .container {
     max-width: 900px;
@@ -133,5 +133,31 @@ body {
 }
 </style>
 
-{% endblock %}
 
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const buscador = document.getElementById("buscarCliente");
+    const selectCliente = document.getElementById("id_cliente");
+
+    // Guardamos todas las opciones originales
+    const opciones = Array.from(selectCliente.options);
+
+    buscador.addEventListener("keyup", function () {
+        const texto = buscador.value.toLowerCase();
+
+        // Limpiamos el select
+        selectCliente.innerHTML = "";
+
+        // Filtramos por nombre o apellido
+        opciones.forEach(option => {
+            if (option.text.toLowerCase().includes(texto)) {
+                selectCliente.appendChild(option);
+            }
+        });
+    });
+});
+</script>
+
+
+{% endblock %}

@@ -2,7 +2,6 @@
 
 {% block content %}
 <style>
-
 body {
     background: url("/static/images/26.jpg") no-repeat center center fixed;
     background-size: cover;
@@ -10,149 +9,289 @@ body {
     color: #a81e1e;
 }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        background-color: #970909;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
-        overflow: hidden;
-    }
+h2 {
+    text-align: center;
+    color: #1a0801;
+    font-size: 28px;
+    margin-top: 20px;
+}
 
-    th, td {
-        border: 2px solid #007BFF;
-        padding: 12px;
-        text-align: center;
-    }
+h3 {
+    text-align: center;
+    background-color: #007BFF;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 40px;
+}
 
-    th {
-        background-color: #007BFF;
-        color: white;
-        font-size: 16px;
-    }
+.card-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
 
-    td {
-        background-color: #968f8f;
-        font-size: 14px;
-    }
+.card {
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 2px solid #007BFF;
+    border-radius: 15px;
+    padding: 20px;
+    width: 300px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+}
 
-    tr:nth-child(even) {
-        background-color: #f2f2f2;
-    }
+.card h4 {
+    color: #1a0801;
+    margin-bottom: 10px;
+}
 
-    a {
-        text-decoration: none;
-        background-color: #28a745;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-weight: bold;
-    }
+.card img {
+    border-radius: 8px;
+    border: 2px solid #007BFF;
+    cursor: pointer;
+    transition: transform 0.2s;
+    width: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    margin-bottom: 10px;
+}
 
-    a:hover {
-        background-color: #218838;
-    }
+.card img:hover {
+    transform: scale(1.05);
+}
 
-    img {
-        border-radius: 8px;
-        border: 2px solid #007BFF;
-        cursor: pointer;
-        transition: transform 0.2s;
-        max-width: 150px;
-    }
+.card a {
+    display: inline-block;
+    margin-top: 5px;
+    background-color: #28a745;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-weight: bold;
+    text-decoration: none;
+}
 
-    img:hover {
-        transform: scale(1.1);
-    }
+.card a:hover {
+    background-color: #218838;
+}
 
-    h2 {
-        text-align: center;
-        color: #1a0801;
-        font-size: 24px;
-    }
-
-    iframe, video {
-        width: 200px;
-        height: 120px;
-        border-radius: 8px;
-        border: 2px solid #007BFF;
-    }
+.card iframe,
+.card video {
+    width: 100%;
+    height: 180px;
+    border-radius: 8px;
+    border: 2px solid #007BFF;
+    margin-top: 10px;
+}
 </style>
 
 <h2>Mi Rutina</h2>
 
-{% if rutinas %}
-    <table>
-        <tr>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Descargar Descripción</th>
-            <th>Imagen</th>
-            <th>Descargar Imagen</th>
-            <th>Video</th>
-            <th>Ver Video</th>
-        </tr>
-        {% for rutina in rutinas %}
-            <tr>
-                <td>{{ rutina.nombre }}</td>
-                <td>{{ rutina.descripcion }}</td>
-                <td>
+{% if rutinas_por_mes %}
+    {% for mes, rutinas in rutinas_por_mes.items %}
+        <h3>{{ mes }}</h3>
+        <div class="card-container">
+            {% for rutina in rutinas %}
+                <div class="card">
+                    <h4>{{ rutina.nombre }}</h4>
+                    <p>{{ rutina.descripcion|linebreaksbr  }}</p>
+
                     {% if rutina.descripcion %}
                         <a href="data:text/plain;charset=utf-8,{{ rutina.descripcion|urlencode }}"
-                            download="{{ rutina.nombre }}_descripcion.txt">Descargar</a>
-                    {% else %}
-                        No disponible
+                            download="{{ rutina.nombre }}_descripcion.txt">Descargar Descripción</a>
                     {% endif %}
-                </td>
-                <td>
+
                     {% if rutina.imagen %}
-                        <img src="{{ rutina.imagen.url }}" alt="Imagen de rutina" width="100">
+                        <img src="{{ rutina.imagen.url }}" alt="Imagen de rutina">
+                        <a href="{{ rutina.imagen.url }}" download="{{ rutina.nombre }}_imagen.jpg">Descargar Imagen</a>
                     {% else %}
-                        No hay imagen
+                        <p>No hay imagen</p>
                     {% endif %}
-                </td>
-                <td>
-                    {% if rutina.imagen %}
-                        <a href="{{ rutina.imagen.url }}" download="{{ rutina.nombre }}_imagen.jpg">Descargar</a>
-                    {% else %}
-                        No disponible
-                    {% endif %}
-                </td>
-                <td>
+
                     {% if rutina.video_url %}
                         {% if 'youtube.com' in rutina.video_url or 'youtu.be' in rutina.video_url %}
-                            <!-- Extraer ID del video correctamente -->
                             {% with rutina.video_url|slice:"-11:" as video_id %}
-                                <iframe 
-                                    width="200" height="120"
-                                    src="https://www.youtube.com/embed/{{ video_id }}?rel=0" 
-                                    allowfullscreen>
-                                </iframe>
+                                <iframe src="https://www.youtube.com/embed/{{ video_id }}?rel=0" allowfullscreen></iframe>
                             {% endwith %}
                         {% else %}
-                            <!-- Video subido manualmente -->
-                            <video controls width="200">
+                            <video controls>
                                 <source src="{{ rutina.video_url }}" type="video/mp4">
                                 Tu navegador no soporta el video.
                             </video>
                         {% endif %}
-                    {% else %}
-                        No disponible
-                    {% endif %}
-                </td>
-                <td>
-                    {% if rutina.video_url %}
                         <a href="{{ rutina.video_url }}" target="_blank">Ver Video</a>
                     {% else %}
-                        No disponible
+                        <p>No hay video</p>
                     {% endif %}
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
 {% else %}
     <p style="text-align: center; font-size: 18px; color: #555;">No tienes ninguna rutina asignada.</p>
 {% endif %}
-
 {% endblock %}
+
+
+
+
+
+<!---->
+
+<!--<style>-->
+
+<!--body {-->
+<!--    background: url("/static/images/26.jpg") no-repeat center center fixed;-->
+<!--    background-size: cover;-->
+<!--    font-family: "Arial", sans-serif;-->
+<!--    color: #a81e1e;-->
+<!--}-->
+
+<!--    table {-->
+<!--        width: 100%;-->
+<!--        border-collapse: collapse;-->
+<!--        margin-top: 20px;-->
+<!--        background-color: #970909;-->
+<!--        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);-->
+<!--        border-radius: 10px;-->
+<!--        overflow: hidden;-->
+<!--    }-->
+
+<!--    th, td {-->
+<!--        border: 2px solid #007BFF;-->
+<!--        padding: 12px;-->
+<!--        text-align: center;-->
+<!--    }-->
+
+<!--    th {-->
+<!--        background-color: #007BFF;-->
+<!--        color: white;-->
+<!--        font-size: 16px;-->
+<!--    }-->
+
+<!--    td {-->
+<!--        background-color: #968f8f;-->
+<!--        font-size: 14px;-->
+<!--    }-->
+
+<!--    tr:nth-child(even) {-->
+<!--        background-color: #f2f2f2;-->
+<!--    }-->
+
+<!--    a {-->
+<!--        text-decoration: none;-->
+<!--        background-color: #28a745;-->
+<!--        color: white;-->
+<!--        padding: 5px 10px;-->
+<!--        border-radius: 5px;-->
+<!--        font-weight: bold;-->
+<!--    }-->
+
+<!--    a:hover {-->
+<!--        background-color: #218838;-->
+<!--    }-->
+
+<!--    img {-->
+<!--        border-radius: 8px;-->
+<!--        border: 2px solid #007BFF;-->
+<!--        cursor: pointer;-->
+<!--        transition: transform 0.2s;-->
+<!--        max-width: 150px;-->
+<!--    }-->
+
+<!--    img:hover {-->
+<!--        transform: scale(1.1);-->
+<!--    }-->
+
+<!--    h2 {-->
+<!--        text-align: center;-->
+<!--        color: #1a0801;-->
+<!--        font-size: 24px;-->
+<!--    }-->
+
+<!--    iframe, video {-->
+<!--        width: 200px;-->
+<!--        height: 120px;-->
+<!--        border-radius: 8px;-->
+<!--        border: 2px solid #007BFF;-->
+<!--    }-->
+<!--</style>-->
+
+<!--<h2>Mi Rutina</h2>-->
+
+<!--{% if rutinas %}-->
+<!--    <table>-->
+<!--        <tr>-->
+<!--            <th>Nombre</th>-->
+<!--            <th>Descripción</th>-->
+<!--            <th>Descargar Descripción</th>-->
+<!--            <th>Imagen</th>-->
+<!--            <th>Descargar Imagen</th>-->
+<!--            <th>Video</th>-->
+<!--            <th>Ver Video</th>-->
+<!--        </tr>-->
+<!--        {% for rutina in rutinas %}-->
+<!--            <tr>-->
+<!--                <td>{{ rutina.nombre }}</td>-->
+<!--                <td>{{ rutina.descripcion }}</td>-->
+<!--                <td>-->
+<!--                    {% if rutina.descripcion %}-->
+<!--                        <a href="data:text/plain;charset=utf-8,{{ rutina.descripcion|urlencode }}"-->
+<!--                            download="{{ rutina.nombre }}_descripcion.txt">Descargar</a>-->
+<!--                    {% else %}-->
+<!--                        No disponible-->
+<!--                    {% endif %}-->
+<!--                </td>-->
+<!--                <td>-->
+<!--                    {% if rutina.imagen %}-->
+<!--                        <img src="{{ rutina.imagen.url }}" alt="Imagen de rutina" width="100">-->
+<!--                    {% else %}-->
+<!--                        No hay imagen-->
+<!--                    {% endif %}-->
+<!--                </td>-->
+<!--                <td>-->
+<!--                    {% if rutina.imagen %}-->
+<!--                        <a href="{{ rutina.imagen.url }}" download="{{ rutina.nombre }}_imagen.jpg">Descargar</a>-->
+<!--                    {% else %}-->
+<!--                        No disponible-->
+<!--                    {% endif %}-->
+<!--                </td>-->
+<!--                <td>-->
+<!--                    {% if rutina.video_url %}-->
+<!--                        {% if 'youtube.com' in rutina.video_url or 'youtu.be' in rutina.video_url %}-->
+                            <!-- Extraer ID del video correctamente -->
+<!--                            {% with rutina.video_url|slice:"-11:" as video_id %}-->
+<!--                                <iframe -->
+<!--                                    width="200" height="120"-->
+<!--                                    src="https://www.youtube.com/embed/{{ video_id }}?rel=0" -->
+<!--                                    allowfullscreen>-->
+<!--                                </iframe>-->
+<!--                            {% endwith %}-->
+<!--                        {% else %}-->
+                            <!-- Video subido manualmente -->
+<!--                            <video controls width="200">-->
+<!--                                <source src="{{ rutina.video_url }}" type="video/mp4">-->
+<!--                                Tu navegador no soporta el video.-->
+<!--                            </video>-->
+<!--                        {% endif %}-->
+<!--                    {% else %}-->
+<!--                        No disponible-->
+<!--                    {% endif %}-->
+<!--                </td>-->
+<!--                <td>-->
+<!--                    {% if rutina.video_url %}-->
+<!--                        <a href="{{ rutina.video_url }}" target="_blank">Ver Video</a>-->
+<!--                    {% else %}-->
+<!--                        No disponible-->
+<!--                    {% endif %}-->
+<!--                </td>-->
+<!--            </tr>-->
+<!--        {% endfor %}-->
+<!--    </table>-->
+<!--{% else %}-->
+<!--    <p style="text-align: center; font-size: 18px; color: #555;">No tienes ninguna rutina asignada.</p>-->
+<!--{% endif %}-->
+
+
+<!---->

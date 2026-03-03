@@ -80,24 +80,26 @@
                 </thead>
                 <tbody>
                     {% for cliente in clientes_inactivos %}
-                    <tr>
-                        <td>{{ cliente.user }}</td>
-                        <td>{{ cliente.nombre }} {{ cliente.apellido }}</td>
-                        <td>+549{{ cliente.numero_celular|slice:"-10:" }}</td>
-                        <td>{{ cliente.email }}</td>
-                        <td>{{ cliente.motivo_inactividad }}</td>
-                        <td>
-                            {% if cliente.numero_celular %}
-                            <a href="https://api.whatsapp.com/send?phone=+549{{ cliente.numero_celular|slice:'-10:' }}&text={{ 'Hola '|add:cliente.nombre|add:', te ofrecemos un 50% de descuento en tu cuota mensual para que regreses!'|urlencode }}" 
-                                target="_blank" class="btn btn-success btn-contact">WhatsApp</a>
-                            {% endif %}
-                            
-                            {% if cliente.email %}
-                            <a href="mailto:{{ cliente.email }}?subject={{ 'Oferta Especial'|urlencode }}&body={{ 'Hola '|add:cliente.nombre|add:', te ofrecemos un 50% de descuento en tu cuota mensual para que regreses!'|urlencode }}" 
-                                class="btn btn-primary btn-contact">Email</a>
-                            {% endif %}
-                        </td>
-                    </tr>
+                        {% if not cliente.user.is_staff %}
+                        <tr>
+                            <td>{{ cliente.user }}</td>
+                            <td>{{ cliente.nombre }} {{ cliente.apellido }}</td>
+                            <td>+549{{ cliente.numero_celular|slice:"-10:" }}</td>
+                            <td>{{ cliente.email }}</td>
+                            <td>{{ cliente.motivo_inactividad }}</td>
+                            <td>
+                                {% if cliente.numero_celular %}
+                                <a href="https://api.whatsapp.com/send?phone=+549{{ cliente.numero_celular|slice:'-10:' }}&text={{ 'Hola '|add:cliente.nombre|add:', te saludamos desde NDentrenamientos, notamos tu ausencia y nos gustaria tenerte de vuelta te ofrecemos un 50% de descuento en tu cuota mensual para que regreses!'|urlencode }}"
+                                    target="_blank" class="btn btn-success btn-contact">WhatsApp</a>
+                                {% endif %}
+
+                                {% if cliente.email %}
+                                <a href="mailto:{{ cliente.email }}?subject={{ 'Oferta Especial'|urlencode }}&body={{ 'Hola '|add:cliente.nombre|add:', te ofrecemos un 50% de descuento en tu cuota mensual para que regreses!'|urlencode }}"
+                                    class="btn btn-primary btn-contact">Email</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
@@ -120,3 +122,4 @@
 </script>
 
 {% endblock %}
+

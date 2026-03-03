@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="alert alert-danger">
+    <h2>Acceso restringido</h2>
+    <p>Tu cuota está vencida. Par a acceder a tu rutina y plan nutricional, debes regularizar tu pago.</p>
+    <a href="{% url 'pago_cuota_enlinea' %}" class="btn btn-primary">Pagar ahora</a>
+</div>
+{% endblock %}

@@ -1,5 +1,8 @@
 
 from .models import Cliente, Asistencia, Pago
+from django.core.mail import send_mail
+from django.conf import settings
+
 from .forms import ClienteForm, AsistenciaForm, PagoForm
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -19,49 +22,65 @@ from django.contrib import messages
 def index(request):
     return render(request, 'index.html')
 
+from django.contrib import messages
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect
+
 def registro_usuario(request):
     if request.method == 'POST':
         form = RegistroUsuarioForm(request.POST)
+
+        # 🔥 Validamos si el username ya existe
+        username = request.POST.get('username')
+        if User.objects.filter(username=username).exists():
+            return render(request, 'clientes/usuario_existente.html')
+
         if form.is_valid():
             form.save()
             messages.success(request, "Registro exitoso. ¡Ahora puedes iniciar sesión!")
             return redirect('home')
     else:
         form = RegistroUsuarioForm()
+
     return render(request, 'clientes/registro_usuario.html', {'form': form})
 
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
+
 from django.utils.timezone import now
-from .models import Cliente, Pago  # Importa ambos modelos
+
+
+
 
 @login_required
 def home(request):
     ultimo_pago = None
     estado_pago = "Desconocido"
-    cliente = None  # Inicializamos la variable cliente
+    cliente = None
+    cumpleanieros = []  # NUEVO: lista para cumpleaños
 
     try:
-        # Obtener el Cliente asociado al usuario autenticado
         cliente = get_object_or_404(Cliente, user=request.user)
-        
-        # Buscar el último pago del cliente
         ultimo_pago = Pago.objects.filter(cliente=cliente).order_by('-fecha_pago').first()
 
-        # Verificar si el pago está al día
         if ultimo_pago:
             if ultimo_pago.fecha_fin and ultimo_pago.fecha_fin >= now().date():
                 estado_pago = "Al día ✅"
             else:
                 estado_pago = "Vencido ❌"
-
     except Cliente.DoesNotExist:
         estado_pago = "No registrado como cliente ❌"
 
+    # 🔥 Buscar quienes cumplen años HOY
+    hoy = date.today()
+    cumpleanieros = Cliente.objects.filter(
+        fecha_nacimiento__month=hoy.month,
+        fecha_nacimiento__day=hoy.day
+    )
+
     return render(request, 'clientes/home.html', {
-        'cliente': cliente,  # 🔥 Agregado al contexto para que se use en el template
+        'cliente': cliente,
         'ultimo_pago': ultimo_pago,
-        'estado_pago': estado_pago
+        'estado_pago': estado_pago,
+        'cumpleanieros': cumpleanieros,  # 🔥 Pasarlo al template
     })
 
 
@@ -86,7 +105,7 @@ def perfil(request):
 
 # para editar el perfil
 from django.shortcuts import render, redirect
-from .forms import ClienteForm
+
 
 
 @login_required
@@ -119,33 +138,87 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import ClienteForm
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+
+from .models import Cliente
+from .forms import ClienteForm, UserEditForm, PasswordChangeCustomForm
+
+
 @login_required
 def editar_cliente(request, cliente_id=None):
     """
     Permite al administrador editar cualquier cliente.
     Los usuarios normales solo pueden editar su propio perfil.
+    Además permite editar los datos del usuario (nombre, apellido, email, username)
+    y cambiar la contraseña de forma segura.
     """
-    # Determinar el cliente a editar
-    if cliente_id and request.user.is_staff:  # Si es administrador y se pasa un cliente_id
+    # --- Determinar el cliente a editar ---
+    if cliente_id and request.user.is_staff:  # Si es admin y se pasa un cliente_id
         cliente = get_object_or_404(Cliente, id=cliente_id)
-    elif not cliente_id:  # Si no hay cliente_id, es el propio usuario
+        usuario = cliente.user
+    elif not cliente_id:  # Usuario común editando su perfil
         try:
             cliente = request.user.cliente
+            usuario = request.user
         except Cliente.DoesNotExist:
-            return redirect('perfil')  # Redirigir si el cliente no existe
-    else:  # Si no es administrador y trata de editar otro cliente
+            messages.error(request, "No se encontró el perfil del cliente.")
+            return redirect('perfil')
+    else:  # Si no es admin y trata de editar otro cliente
+        messages.warning(request, "No tienes permisos para editar este cliente.")
         return redirect('perfil')
 
-    # Manejar formulario
+    # --- Procesamiento del formulario ---
     if request.method == 'POST':
-        form = ClienteForm(request.POST, request.FILES, instance=cliente)
-        if form.is_valid():
-            form.save()
-            return redirect('listar_clientes' if request.user.is_staff else 'perfil')
-    else:
-        form = ClienteForm(instance=cliente)
+        cliente_form = ClienteForm(request.POST, request.FILES, instance=cliente)
+        user_form = UserEditForm(request.POST, instance=usuario)
+        password_form = PasswordChangeCustomForm(request.POST)
 
-    return render(request, 'clientes/editar_cliente.html', {'form': form, 'cliente': cliente})
+        if cliente_form.is_valid() and user_form.is_valid() and password_form.is_valid():
+            # Guardar cambios del cliente y usuario
+            cliente_form.save()
+            user_form.save()
+
+            # --- Manejo del cambio de contraseña ---
+            nueva_pass = password_form.cleaned_data.get('nueva_password')
+            pass_actual = password_form.cleaned_data.get('password_actual')
+
+            if nueva_pass:
+                if usuario.check_password(pass_actual):
+                    try:
+                        validate_password(nueva_pass, usuario)
+                        usuario.set_password(nueva_pass)
+                        usuario.save()
+                        update_session_auth_hash(request, usuario)
+                        messages.success(request, "🔒 Contraseña actualizada correctamente.")
+                    except ValidationError as e:
+                        messages.error(request, f"Error al validar la contraseña: {e}")
+                        return redirect('editar_cliente', cliente_id=cliente.id if request.user.is_staff else None)
+                else:
+                    messages.error(request, "⚠️ La contraseña actual no es correcta.")
+                    return redirect('editar_cliente', cliente_id=cliente.id if request.user.is_staff else None)
+
+            messages.success(request, "✅ Perfil actualizado correctamente.")
+            return redirect('listar_clientes' if request.user.is_staff else 'perfil')
+        else:
+            messages.error(request, "⚠️ Verifica los datos ingresados.")
+    else:
+        cliente_form = ClienteForm(instance=cliente)
+        user_form = UserEditForm(instance=usuario)
+        password_form = PasswordChangeCustomForm()
+
+    # --- Renderizar template ---
+    return render(request, 'clientes/editar_cliente.html', {
+        'form': cliente_form,
+        'user_form': user_form,
+        'password_form': password_form,
+        'cliente': cliente
+    })
+
 
 
 
@@ -155,6 +228,7 @@ def editar_cliente(request, cliente_id=None):
 from django.shortcuts import render, redirect
 from .forms import ClienteForm  # Asumiendo que tienes un formulario para el modelo Cliente
 
+
 @login_required
 def completar_perfil(request):
     if request.method == 'POST':
@@ -163,11 +237,23 @@ def completar_perfil(request):
             cliente = form.save(commit=False)
             cliente.user = request.user
             cliente.save()
+
+            # Enviar el saludo al correo
+            if cliente.email:  # Asegurarse de que haya un correo
+                send_mail(
+                    subject='¡Bienvenido a nuestro gimnasio!',
+                    message=f'Hola {cliente.nombre},\n\n¡Gracias por completar tu perfil! Estamos muy felices de tenerte con nosotros.',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[cliente.email],
+                    fail_silently=False,
+                )
+
             return redirect('perfil')
     else:
         form = ClienteForm()
 
     return render(request, 'clientes/completar_perfil.html', {'form': form})
+
 
 
 
@@ -190,65 +276,64 @@ def listar_clientes(request):
 
     return render(request, 'clientes/listar_clientes.html', {'clientes': clientes})
 
-
-# clientes inactivos
-from django.db.models import Subquery, Exists, OuterRef, Q
-from datetime import timedelta
+from django.shortcuts import render
+from django.db.models import Subquery, Exists, OuterRef, Q, DateField
 from django.utils.timezone import now
+from datetime import timedelta
+
+from .models import Cliente, Asistencia, Pago
 
 def listar_inactivos(request):
     hoy = now().date()
-    hace_dos_meses = hoy - timedelta(days=60)
     hace_un_mes = hoy - timedelta(days=30)
 
-    ultima_asistencia_subquery = Asistencia.objects.filter(
-        cliente=OuterRef('pk')
+    # Subconsulta para última asistencia presente
+    subquery_ultima_asistencia = Asistencia.objects.filter(
+        cliente=OuterRef('pk'),
+        presente=True
     ).order_by('-fecha').values('fecha')[:1]
 
-    clientes_con_ultima_asistencia = Cliente.objects.annotate(
-        ultima_asistencia=Subquery(ultima_asistencia_subquery)
+    # Subconsulta para último pago vigente (fecha_inicio <= hoy <= fecha_fin)
+    subquery_pago_vigente = Pago.objects.filter(
+        cliente=OuterRef('pk'),
+        fecha_inicio__lte=hoy,
+        fecha_fin__gte=hoy
     )
 
-    clientes_sin_pago = Cliente.objects.filter(
-        ~Exists(Pago.objects.filter(cliente=OuterRef('pk'), fecha_pago__gte=hace_dos_meses))
+    # Subconsulta para obtener última fecha de pago (por si no tiene vigente)
+    subquery_ultimo_pago = Pago.objects.filter(
+        cliente=OuterRef('pk')
+    ).order_by('-fecha_fin').values('fecha_fin')[:1]
+
+    # Anotaciones
+    clientes = Cliente.objects.annotate(
+        ultima_asistencia=Subquery(subquery_ultima_asistencia, output_field=DateField()),
+        tiene_pago_vigente=Exists(subquery_pago_vigente),
+        fecha_ultimo_pago=Subquery(subquery_ultimo_pago, output_field=DateField())
     )
 
-    clientes_sin_asistencia = clientes_con_ultima_asistencia.filter(
-        Q(ultima_asistencia__isnull=True) |
-        Q(ultima_asistencia__lt=hace_un_mes)
-    )
-
-    clientes_inactivos = (clientes_sin_pago | clientes_sin_asistencia).distinct()
-
-    # Preparando el motivo de inactividad para cada cliente con el tiempo sin pagar y sin asistir
-    inactividad_por_pago = {}
-    inactividad_por_asistencia = {}
-
-    for cliente in clientes_sin_pago:
-        ultima_pago = Pago.objects.filter(cliente=cliente).order_by('-fecha_pago').first()
-        if ultima_pago:
-            tiempo_sin_pagar = hoy - ultima_pago.fecha_pago
-            inactividad_por_pago[cliente.id] = f'No pagó la cuota en {tiempo_sin_pagar.days} días'
-        else:
-            inactividad_por_pago[cliente.id] = 'No pagó la cuota en más de 60 días'
-
-    for cliente in clientes_sin_asistencia:
-        ultima_asistencia = Asistencia.objects.filter(cliente=cliente).order_by('-fecha').first()
-        if ultima_asistencia:
-            tiempo_sin_asistir = hoy - ultima_asistencia.fecha
-            inactividad_por_asistencia[cliente.id] = f'No asistió al gimnasio en {tiempo_sin_asistir.days} días'
-        else:
-            inactividad_por_asistencia[cliente.id] = 'No asistió al gimnasio en más de 30 días'
-
-    for cliente in clientes_inactivos:
+    # Filtrar clientes inactivos
+    clientes_inactivos = []
+    for cliente in clientes:
         motivo = []
-        if cliente.id in inactividad_por_pago:
-            motivo.append(inactividad_por_pago[cliente.id])
-        if cliente.id in inactividad_por_asistencia:
-            motivo.append(inactividad_por_asistencia[cliente.id])
 
-        # Añadir el motivo de inactividad al cliente
-        cliente.motivo_inactividad = " y ".join(motivo) if len(motivo) > 1 else motivo[0]
+        # Verificación de cuota
+        if not cliente.tiene_pago_vigente:
+            if cliente.fecha_ultimo_pago:
+                dias_sin_cuota = (hoy - cliente.fecha_ultimo_pago).days
+                motivo.append(f"No tiene cuota vigente desde hace {dias_sin_cuota} días")
+            else:
+                motivo.append("Nunca pagó una cuota")
+
+        # Verificación de asistencia
+        if not cliente.ultima_asistencia or cliente.ultima_asistencia < hace_un_mes:
+            dias = (hoy - cliente.ultima_asistencia).days if cliente.ultima_asistencia else 30
+            motivo.append(f"No asistió al gimnasio en más de {dias} días")
+
+        # Agregamos al listado si hay algún motivo
+        if motivo:
+            cliente.motivo_inactividad = " y ".join(motivo)
+            clientes_inactivos.append(cliente)
 
     return render(request, 'clientes/inactivos.html', {
         'clientes_inactivos': clientes_inactivos
@@ -256,13 +341,43 @@ def listar_inactivos(request):
 
 
 #  listará los QR DE LOS CLIENTES
-from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from .models import Cliente
+import qrcode
+import base64
+from io import BytesIO
 
 def listar_qr_clientes(request):
-    clientes = Cliente.objects.all()
-    return render(request, 'clientes/listar_qr.html', {'clientes': clientes})
+    clientes = Cliente.objects.all()  # Obtener todos los clientes
+
+    # Generar los datos del QR y la imagen base64 para cada cliente
+    qr_codes = []
+    for cliente in clientes:
+        qr_data = f"ID:{cliente.id}\nNombre:{cliente.nombre}\nApellido:{cliente.apellido}\nCelular:{cliente.numero_celular}"
+
+        # Generar el QR
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+
+        # Crear la imagen del QR
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        # Convertir a base64
+        qr_code_url = f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode('utf-8')}"
+
+        # Almacenar el QR y el cliente
+        qr_codes.append({'cliente': cliente, 'qr_code_url': qr_code_url})
+
+    return render(request, 'clientes/listar_qr.html', {'qr_codes': qr_codes})
 
 
 
@@ -341,7 +456,7 @@ def listar_asistencias(request):
         asistencia_hoy = Asistencia.objects.filter(cliente=cliente_actual, fecha=hoy).first()
 
     # 🔹 Aplicar paginación (20 asistencias por página)
-    paginator = Paginator(asistencias, 20)
+    paginator = Paginator(asistencias, 500)
     asistencias_paginadas = paginator.get_page(page_number)
 
     # 🔹 Agrupar asistencias por mes y día
@@ -755,6 +870,10 @@ def registrar_asistencia_qr(request):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Error en el formato de datos"}, status=400)
 
+# escanea rapido la camara solo la0 isistencia
+
+def escanear_qr_rapido(request):
+    return render(request, "escaneo_rapido.html")
 
 
 
@@ -837,20 +956,43 @@ from django.shortcuts import render
 from datetime import date, timedelta
 from .models import Pago
 
+# renderiza, los clientes al dia, vencidos y por vencer
+
+
+
+from datetime import date, timedelta
+from django.db.models import Max
+
 def vencimientos_pagos(request):
     hoy = date.today()
     proximos_7_dias = hoy + timedelta(days=7)
-    
-    pagos_vencidos = Pago.objects.filter(fecha_fin__lt=hoy)
-    pagos_por_vencer = Pago.objects.filter(fecha_fin__gte=hoy, fecha_fin__lte=proximos_7_dias)
-    pagos_al_dia = Pago.objects.filter(fecha_fin__gt=proximos_7_dias)
+
+    # Último pago por cliente
+    ultimos_pagos = (
+        Pago.objects
+        .values('cliente')
+        .annotate(ultima_fecha=Max('fecha_fin'))
+    )
+
+    pagos_ids = [
+        Pago.objects.filter(cliente=p['cliente'], fecha_fin=p['ultima_fecha']).first().id
+        for p in ultimos_pagos
+    ]
+
+    pagos = Pago.objects.filter(id__in=pagos_ids)
+
+    pagos_vencidos = pagos.filter(fecha_fin__lt=hoy)
+    pagos_por_vencer = pagos.filter(fecha_fin__gte=hoy, fecha_fin__lte=proximos_7_dias)
+    pagos_al_dia = pagos.filter(fecha_fin__gt=proximos_7_dias)
 
     context = {
         'pagos_vencidos': pagos_vencidos,
         'pagos_por_vencer': pagos_por_vencer,
         'pagos_al_dia': pagos_al_dia,
     }
+
     return render(request, 'clientes/vencimientos.html', context)
+
 
 
 # pagos en line y comprvantes desde aquiiiiiiiiiiiiiiiiiii
@@ -861,8 +1003,8 @@ from .forms import ComprobantePagoForm
 
 def pago_cuota_enlinea(request):
     datos_bancarios = {
-        "cbu": "1234567890123456789012",
-        "cvu": "0000003100001234567891",
+        "cbu": "NDentrenamiento.21",
+        "cvu": "----------",
         "qr": "/media/qr_gym.png"
     }
 
@@ -875,9 +1017,9 @@ def pago_cuota_enlinea(request):
         form = ComprobantePagoForm(request.POST, request.FILES)
         if form.is_valid():
             comprobante = form.save(commit=False)
-            comprobante.cliente = request.user  
+            comprobante.cliente = request.user
             comprobante.save()
-            return redirect('pago_cuota_enlinea')  
+            return redirect('pago_cuota_enlinea')
 
     else:
         form = ComprobantePagoForm()
@@ -915,7 +1057,7 @@ def eliminar_comprobante(request, comprobante_id):
 
     # Elimina el registro de la base de datos
     comprobante.delete()
-    
+
     messages.success(request, "Comprobante eliminado correctamente.")
     return redirect('listar_comprobantes')  # Ajusta según tu URL de listado
 
@@ -943,6 +1085,11 @@ from django.shortcuts import render, redirect
 from .models import Rutina, Cliente
 from .forms import RutinaForm
 
+# si la cuota esta vencida , template de error
+def cuota_vencida(request):
+    return render(request, 'cuota_vencida.html')
+
+
 def crear_rutina(request):
     if request.method == "POST":
         form = RutinaForm(request.POST, request.FILES)
@@ -963,7 +1110,7 @@ def crear_rutina(request):
 
     # Pasamos los clientes disponibles al template
     clientes = Cliente.objects.all()
-    
+
     return render(request, "rutinas/crear_rutina.html", {"form_rutina": form, "clientes": clientes})
 
 
@@ -985,17 +1132,45 @@ def listar_rutinas(request):
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from .models import Rutina  # Asegúrate de importar el modelo Rutina
+from .models import Rutina
+
+# @login_required
+# def mi_rutina(request):
+#     if not hasattr(request.user, 'cliente') or request.user.cliente.membresia_vencida():
+#         return redirect('cuota_vencida')
+
+#     rutinas = Rutina.objects.filter(clientes=request.user).order_by('fecha_creacion')
+#     return render(request, "rutinas/mi_rutina.html", {"rutinas": rutinas})
+
+
+from collections import defaultdict
+from django.utils import timezone
 
 @login_required
 def mi_rutina(request):
-    usuario = request.user
-    rutinas = Rutina.objects.filter(clientes=usuario).order_by('-fecha_creacion')  # Lo más reciente primero
+    if not hasattr(request.user, 'cliente') or request.user.cliente.membresia_vencida():
+        return redirect('cuota_vencida')
 
-    return render(request, "rutinas/mi_rutina.html", {"rutinas": rutinas})
+    rutinas = Rutina.objects.filter(clientes=request.user).order_by('fecha_creacion')
 
+    # Agrupar por año y mes
+    rutinas_por_mes = defaultdict(list)
+    for rutina in rutinas:
+        key = rutina.fecha_creacion.strftime("%B %Y")  # Ej: "Abril 2025"
+        rutinas_por_mes[key].append(rutina)
 
+    return render(request, "rutinas/mi_rutina.html", {"rutinas_por_mes": dict(rutinas_por_mes)})
 
+# eliminar rutina
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from .models import Rutina
+
+@login_required
+def eliminar_rutina(request, rutina_id):
+    rutina = get_object_or_404(Rutina, id=rutina_id)
+    rutina.delete()
+    return redirect('listar_rutinas')  # Cambiá a la vista correcta donde estás mostrando las rutinas
 
 
 from django.contrib.auth.models import User
@@ -1026,10 +1201,10 @@ def asignar_cliente_a_rutina(request, rutina_id):
         rutina = get_object_or_404(Rutina, id=rutina_id)
         cliente_id = request.POST.get("cliente_id")
         cliente = get_object_or_404(Cliente, id=cliente_id)
-        
+
         rutina.clientes.add(cliente.user)
         messages.success(request, f"Cliente {cliente.nombre} asignado a la rutina {rutina.nombre}.")
-        
+
     return redirect("listar_rutinas")
 
 
@@ -1044,10 +1219,10 @@ from .models import Rutina
 def eliminar_todos_clientes_de_rutina(request, rutina_id):
     # Obtener la rutina
     rutina = get_object_or_404(Rutina, id=rutina_id)
-    
+
     # Eliminar todos los clientes asignados
     rutina.clientes.clear()
-    
+
     # Redirigir a la página de listar rutinas
     return redirect('listar_rutinas')
 
@@ -1078,7 +1253,7 @@ from .models import Grupo, Subgrupo
 @login_required
 def eliminar_grupo(request, grupo_id):
     grupo = get_object_or_404(Grupo, id=grupo_id)
-    
+
     # Eliminar todas las relaciones de subgrupos y rutinas
     grupo.subgrupos.all().delete()  # Eliminar subgrupos
     grupo.rutina_set.all().delete()  # Eliminar rutinas asociadas
@@ -1091,7 +1266,7 @@ def eliminar_grupo(request, grupo_id):
 @login_required
 def eliminar_subgrupo(request, subgrupo_id):
     subgrupo = get_object_or_404(Subgrupo, id=subgrupo_id)
-    
+
     # Eliminar todas las rutinas asociadas al subgrupo
     subgrupo.rutina_set.all().delete()
 
@@ -1129,7 +1304,7 @@ def crear_plan_nutricional(request):
 
     # Pasamos los clientes disponibles al template
     clientes = Cliente.objects.all()
-    
+
     return render(request, "nutricion/crear_plan_nutricional.html", {"form_nutricion": form, "clientes": clientes})
 
 
@@ -1152,9 +1327,10 @@ from .models import PlanNutricional
 
 @login_required
 def mi_plan_nutricional(request):
-    usuario = request.user
-    planes = PlanNutricional.objects.filter(clientes=usuario).order_by('-fecha_creacion')  # Lo más reciente primero
+    if not hasattr(request.user, 'cliente') or request.user.cliente.membresia_vencida():
+        return redirect('cuota_vencida')  # Redirigir si no tiene cliente o su cuota está vencida
 
+    planes = PlanNutricional.objects.filter(clientes=request.user).order_by('-fecha_creacion')
     return render(request, "nutricion/mi_plan_nutricional.html", {"planes": planes})
 
 
@@ -1185,10 +1361,10 @@ def asignar_cliente_a_plan_nutricional(request, plan_nutricional_id):
         plan_nutricional = get_object_or_404(PlanNutricional, id=plan_nutricional_id)
         cliente_id = request.POST.get("cliente_id")
         cliente = get_object_or_404(Cliente, id=cliente_id)
-        
+
         plan_nutricional.clientes.add(cliente.user)
         messages.success(request, f"Cliente {cliente.nombre} asignado al plan nutricional {plan_nutricional.nombre}.")
-        
+
     return redirect("listar_planes_nutricionales")
 
 from django.shortcuts import get_object_or_404, redirect
@@ -1197,7 +1373,7 @@ from .models import PlanNutricional
 def eliminar_todos_clientes_de_plan_nutricional(request, plan_nutricional_id):
     plan_nutricional = get_object_or_404(PlanNutricional, id=plan_nutricional_id)
     plan_nutricional.clientes.clear()
-    
+
     return redirect('listar_planes_nutricionales')
 
 from django.shortcuts import get_object_or_404, redirect
@@ -1244,7 +1420,7 @@ def eliminar_categoria(request, id):
 
     # Finalmente, eliminar la categoría
     categoria.delete()
-    
+
     return redirect('listar_planes_nutricionales')  # Redirigir a la lista de planes
 
 from django.shortcuts import get_object_or_404, redirect
@@ -1254,7 +1430,7 @@ from .models import Subcategoria  # Asegúrate de importar el modelo correcto
 @login_required
 def eliminar_subcategoria(request, subcategoria_id):
     subcategoria = get_object_or_404(Subcategoria, id=subcategoria_id)
-    
+
     # Eliminar todos los planes nutricionales asociados a la subcategoría
     subcategoria.plannutricional_set.all().delete()
 

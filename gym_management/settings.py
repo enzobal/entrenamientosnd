@@ -138,7 +138,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'pirueee@gmail.com'
-EMAIL_HOST_PASSWORD = 'plndgpynfadknfqy'  # Usa una contraseña de aplicación, no la contraseña real.
+EMAIL_HOST_PASSWORD = 'fuufjdbswryjhorc'  # Usa una contraseña de aplicación, no la contraseña real.
 
 
 

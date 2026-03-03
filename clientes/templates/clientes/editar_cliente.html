@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-
-{% block title %}Editar Perfil - FullGym{% endblock %}
+{% block title %}Editar Cliente{% endblock %}
 
 {% block content %}
 <div class="editar-perfil-container">
@@ -11,100 +10,61 @@
             Editar Perfil
         {% endif %}
     </h2>
-    
+
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        
-        <div class="form-group">
-            {{ form.as_p }}
-        </div>
-        
+
+
+        <h3>💪 Datos del Cliente</h3>
+        {{ form.as_p }}
+
+        <hr>
+
+        <h3>👤 Datos del Usuario</h3>
+        {{ user_form.as_p }}
+
+        <hr>
+
+
+        <h3>🔒 Cambiar Contraseña</h3>
+        <p><small>Deja estos campos vacíos si no deseas cambiarla.</small></p>
+        {{ password_form.as_p }}
+
         <div class="form-actions">
-            <button type="submit">Guardar</button>
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
         </div>
     </form>
 </div>
 
 <style>
-/* Establecer imagen de fondo */
-body {
-    
-    background: url("/static/images/foto2.jpg") no-repeat center center fixed;
-    background-size: cover;
-    font-family: "Arial", sans-serif;
-    color: white;
-}
-
-/* Contenedor principal */
 .editar-perfil-container {
-    max-width: 500px;
-    margin: 50px auto;
-    padding: 30px;
-    background: rgba(0, 0, 0, 0.7);
+    max-width: 700px;
+    margin: 40px auto;
+    background: rgba(0,0,0,0.75);
+    padding: 25px;
     border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-    text-align: center;
-    animation: fadeIn 0.5s ease-in-out;
+    color: white;
 }
-
-/* Título */
-.editar-perfil-container h2 {
-    color: #ffcc00; /* Amarillo */
-    font-size: 24px;
-    margin-bottom: 20px;
-}
-
-/* Estilos del formulario */
-.form-group {
-    text-align: left;
-}
-
-/* Campos del formulario */
-.editar-perfil-container input,
-.editar-perfil-container select,
-.editar-perfil-container textarea {
+input, textarea, select {
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid #ff66cc;
+    border-radius: 5px;
+    padding: 8px;
     width: 100%;
-    padding: 10px;
-    margin-top: 8px;
-    border: 1px solid #ff9900; /* Naranja */
-    border-radius: 5px;
-    font-size: 14px;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    margin-bottom: 12px;
 }
-
-/* Botón */
-.form-actions {
-    margin-top: 20px;
-}
-
-.form-actions button {
-    background: #ff9900; /* Naranja */
+button {
+    background-color: #ff66cc;
     color: white;
-    padding: 12px 20px;
+    padding: 10px 18px;
     border: none;
-    border-radius: 5px;
-    font-size: 16px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: 0.3s ease-in-out;
 }
-
-.form-actions button:hover {
-    background: #cc7700; /* Naranja oscuro */
-    transform: scale(1.05);
-}
-
-/* Animación de entrada */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+button:hover {
+    background-color: #ff3399;
 }
 </style>
-
 {% endblock %}
+

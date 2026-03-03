@@ -1,82 +1,156 @@
+
 {% extends "base.html" %}
 
 {% block title %}Estado de Cuota - {{ cliente.nombre }}{% endblock %}
 
 {% block content %}
+
+<!-- Botón escanear -->
 <div class="text-center mt-4">
-    <a href="{% url 'escanear_qr' %}" class="btn btn-primary btn-lg" style="background-color: #ff4500; border-color: #ff4500;">
+    <a href="{% url 'escanear_qr' %}"
+       class="btn btn-lg"
+       style="background-color:#ff4500; border-color:#ff4500; color:white; font-weight:bold;">
         📷 Escanear otro usuario
     </a>
 </div>
 
-<div class="container mt-4">
-    <h2>Estado de Cuota de {{ cliente.nombre }} {{ cliente.apellido }}</h2>
+<div class="container mt-4" style="color:#eaeaea;">
 
-    <div class="card">
+    <!-- Imagen de perfil -->
+    {% if cliente.imagen_perfil %}
+        <div class="text-center mb-3">
+            <img src="{{ cliente.imagen_perfil.url }}"
+                 alt="Foto de perfil"
+                 style="width:160px; height:160px; border-radius:50%;
+                        object-fit:cover; border:3px solid #00e5ff;">
+        </div>
+    {% else %}
+        <p class="text-center" style="color:#9aa4bf;">
+            (El cliente no tiene imagen cargada)
+        </p>
+    {% endif %}
+
+    <!-- Título -->
+    <h2 class="text-center mt-3" style="color:#00e5ff;">
+        Estado de Cuota de {{ cliente.nombre }} {{ cliente.apellido }}
+    </h2>
+
+    <!-- Card estado -->
+    <div class="card mt-4"
+         style="background:rgba(20,25,45,0.75); border:1px solid rgba(255,255,255,0.15);">
         <div class="card-body">
-            <p><strong>Nombre:</strong> {{ cliente.nombre }} {{ cliente.apellido }}</p>
 
-            <!-- Último pago (en rojo si no hay pagos) -->
-            <p><strong>Último pago:</strong>
+            <p><strong style="color:white;">Nombre:</strong>
+                {{ cliente.nombre }} {{ cliente.apellido }}
+            </p>
+
+            <!-- Último pago -->
+            <p>
+                <strong style="color:white;">Último pago:</strong>
                 {% if pagos %}
                     {{ pagos.0.fecha_pago }}
                 {% else %}
-                    <span style="color:red;">No hay pagos registrados</span>
+                    <span style="color:#ff4d4d; font-weight:bold;">
+                        No hay pagos registrados
+                    </span>
                 {% endif %}
             </p>
 
-            <!-- Fecha de inicio -->
-            <p><strong>Fecha de inicio:</strong> {% if pagos %} {{ pagos.0.fecha_inicio }} {% else %} - {% endif %}</p>
-
-            <!-- Fecha de fin y comparación con la fecha actual -->
-            <p><strong>Fecha de fin:</strong>
+            <!-- Fecha inicio -->
+            <p>
+                <strong style="color:white;">Fecha de inicio:</strong>
                 {% if pagos %}
-                    {{ pagos.0.fecha_fin }}
-                    {% comment %} Comparación con la fecha actual {% endcomment %}
-                    {% if pagos.0.fecha_fin < today_date %}
-                        <span style="color:red;">El cliente debe la cuota</span>
-                    {% else %}
-                        <span style="color:green;">El cliente tiene la cuota al día</span>
-                    {% endif %}
-
-                    {% comment %} Tiempo transcurrido desde el último pago {% endcomment %}
-                    {% if dias_transcurridos %}
-                        <p><strong>Tiempo transcurrido desde el último pago (dias para vencer si el valor es negativo):</strong> {{ dias_transcurridos }} días</p>
-                    {% else %}
-                        <p><strong>Tiempo transcurrido desde el último pago :</strong> No hay pagos registrados</p>
-                    {% endif %}
-
+                    {{ pagos.0.fecha_inicio }}
                 {% else %}
                     -
                 {% endif %}
             </p>
+
+            <!-- Fecha fin + estado -->
+            <p>
+                <strong style="color:white;">Fecha de fin:</strong>
+                {% if pagos %}
+                    {{ pagos.0.fecha_fin }}
+
+                    {% if pagos.0.fecha_fin < today_date %}
+                        <span style="color:#ff4d4d; font-weight:bold; margin-left:8px;">
+                            ❌ El cliente debe la cuota
+                        </span>
+                    {% else %}
+                        <span style="color:#00ff9c; font-weight:bold; margin-left:8px;">
+                            ✅ Cuota al día
+                        </span>
+                    {% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </p>
+
+            <!-- Días transcurridos -->
+            {% if pagos %}
+                {% if dias_transcurridos %}
+                    <p>
+                        <strong style="color:white;">
+                            Tiempo transcurrido desde el último pago
+                            (días para vencer si es negativo):
+                        </strong>
+                        {{ dias_transcurridos }} días
+                    </p>
+                {% else %}
+                    <p>
+                        <strong style="color:white;">Tiempo transcurrido:</strong>
+                        No disponible
+                    </p>
+                {% endif %}
+            {% else %}
+                <p>
+                    <strong style="color:white;">Tiempo transcurrido:</strong>
+                    No hay pagos registrados
+                </p>
+            {% endif %}
+
         </div>
     </div>
 
-    <h3 class="mt-4">Historial de Pagos</h3>
-    <table class="table table-bordered">
-        <thead class="thead-dark">
-            <tr>
-                <th>Fecha de Pago</th>
-                <th>Importe</th>
-                <th>Fecha de Inicio</th>
-                <th>Fecha de Fin</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pago in pagos %}
-            <tr>
-                <td>{{ pago.fecha_pago }}</td>
-                <td>${{ pago.importe }}</td>
-                <td>{{ pago.fecha_inicio }}</td>
-                <td>{{ pago.fecha_fin }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" class="text-center">No hay pagos registrados.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Historial -->
+    <h3 class="mt-5" style="color:#7b2cff;">
+        Historial de Pagos
+    </h3>
+
+    <div class="table-responsive">
+        <table class="table table-bordered mt-3"
+               style="color:#eaeaea;">
+
+            <thead style="background:#11162a; color:white;">
+                <tr>
+                    <th>Fecha de Pago</th>
+                    <th>Importe</th>
+                    <th>Fecha de Inicio</th>
+                    <th>Fecha de Fin</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for pago in pagos %}
+                <tr style="background:rgba(255,255,255,0.03);">
+                    <td>{{ pago.fecha_pago }}</td>
+                    <td>${{ pago.importe }}</td>
+                    <td>{{ pago.fecha_inicio }}</td>
+                    <td>{{ pago.fecha_fin }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center" style="color:#9aa4bf;">
+                        No hay pagos registrados
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
 </div>
+
 {% endblock %}
+

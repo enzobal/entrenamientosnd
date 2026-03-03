@@ -1,32 +1,170 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
+
+
+
+
+
+
+<style>
+/* =========================
+   VENCIMIENTOS DARK GLOW
+========================= */
+
+.container {
+    animation: fadeUp 0.6s ease-out;
+}
+
+/* Animación entrada */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Títulos */
+h2 {
+    color: #eaeaea;
+    text-shadow: 0 0 15px rgba(0,229,255,0.4);
+}
+
+h3 {
+    margin-bottom: 15px;
+}
+
+/* List group contenedor */
+.list-group {
+    background: rgba(10, 15, 30, 0.85);
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(0,229,255,0.15);
+    overflow: hidden;
+}
+
+/* Items */
+.list-group-item {
+    background: rgba(20, 25, 45, 0.92) !important;
+    color: #f1f1f1 !important;
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+/* Hover */
+.list-group-item:hover {
+    background: rgba(0,229,255,0.18) !important;
+    transform: translateX(6px);
+}
+
+/* Texto vacío */
+.list-group-item.text-muted {
+    color: #9aa4bf !important;
+    font-style: italic;
+}
+
+/* Badges */
+.badge {
+    font-weight: bold;
+    padding: 6px 10px;
+    border-radius: 12px;
+}
+
+/* Estados */
+.badge.bg-danger {
+    background: linear-gradient(135deg, #ff5252, #ff1744);
+    color: #000;
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ffd54f, #ffb300);
+    color: #000;
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #00e676, #00c853);
+    color: #000;
+}
+
+/* Iconos estado */
+.estado-icono {
+    font-size: 18px;
+    margin-right: 10px;
+}
+
+/* Colores iconos */
+.icono-vencido { color: #ff5252; }
+.icono-warning { color: #ffd54f; }
+.icono-ok { color: #00e676; }
+
+/* Mobile */
+@media (max-width: 768px) {
+    .list-group-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        font-size: 13px;
+    }
+}
+</style>
+
+
+
+
+
+
+
 <div class="container mt-4">
     <h2 class="text-center mb-4">Control de Vencimientos</h2>
-    
+
+
+
+
+
     <div class="row">
         <div class="col-md-4">
             <h3 class="text-danger">Pagos Vencidos</h3>
             <ul class="list-group">
                 {% for pago in pagos_vencidos %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ pago.cliente.nombre }} {{ pago.cliente.apellido }} - Venció el {{ pago.fecha_fin|date:"d/m/Y" }}
-                        <span class="badge bg-danger">Vencido</span>
-                    </li>
+
+<li class="list-group-item cliente-item">
+    <div>
+        <span class="estado-icono icono-vencido">❌</span>
+        {{ pago.cliente.nombre }} {{ pago.cliente.apellido }}
+        <br>
+        <small>Venció el {{ pago.fecha_fin|date:"d/m/Y" }}</small>
+    </div>
+    <span class="badge bg-danger">Vencido</span>
+</li>
+
                 {% empty %}
                     <li class="list-group-item text-muted">No hay pagos vencidos</li>
                 {% endfor %}
             </ul>
         </div>
-        
+
         <div class="col-md-4">
             <h3 class="text-warning">Próximos a Vencer</h3>
             <ul class="list-group">
                 {% for pago in pagos_por_vencer %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ pago.cliente.nombre }} {{ pago.cliente.apellido }} - Vence el {{ pago.fecha_fin|date:"d/m/Y" }}
-                        <span class="badge bg-warning text-dark">Por vencer</span>
-                    </li>
+<li class="list-group-item cliente-item">
+    <div>
+        <span class="estado-icono icono-warning">⚠️</span>
+        {{ pago.cliente.nombre }} {{ pago.cliente.apellido }}
+        <br>
+        <small>Vence el {{ pago.fecha_fin|date:"d/m/Y" }}</small>
+    </div>
+    <span class="badge bg-warning">Por vencer</span>
+</li>
+
                 {% empty %}
                     <li class="list-group-item text-muted">No hay pagos próximos a vencer</li>
                 {% endfor %}
@@ -37,10 +175,16 @@
             <h3 class="text-success">Pagos al Día</h3>
             <ul class="list-group">
                 {% for pago in pagos_al_dia %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ pago.cliente.nombre }} {{ pago.cliente.apellido }} - Pago hasta el {{ pago.fecha_fin|date:"d/m/Y" }}
-                        <span class="badge bg-success">Al día</span>
-                    </li>
+<li class="list-group-item cliente-item">
+    <div>
+        <span class="estado-icono icono-ok">✅</span>
+        {{ pago.cliente.nombre }} {{ pago.cliente.apellido }}
+        <br>
+        <small>Pago hasta {{ pago.fecha_fin|date:"d/m/Y" }}</small>
+    </div>
+    <span class="badge bg-success">Al día</span>
+</li>
+
                 {% empty %}
                     <li class="list-group-item text-muted">No hay clientes con pagos al día</li>
                 {% endfor %}
@@ -48,4 +192,17 @@
         </div>
     </div>
 </div>
+
+<script>
+function filtrarClientes(texto) {
+    texto = texto.toLowerCase();
+    const items = document.getElementsByClassName("cliente-item");
+
+    for (let i = 0; i < items.length; i++) {
+        const contenido = items[i].innerText.toLowerCase();
+        items[i].style.display = contenido.includes(texto) ? "" : "none";
+    }
+}
+</script>
+
 {% endblock %}

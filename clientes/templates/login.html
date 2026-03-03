@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Bienvenido a ND Entrenamientos - Iniciar Sesión{% endblock %}
+{% block title %}Bienvenido a BUM BUM FITNESS FEM - Iniciar Sesión{% endblock %}
 
 {% block content %}
 <style>
     body {
-        background: url('{% static "images/23.jpg" %}') no-repeat center center fixed;
+        background: url('{% static "images/logo.jpeg" %}') no-repeat center center fixed;
         background-size: cover;
         color: #fff;
         font-family: 'Arial', sans-serif;
@@ -116,8 +116,8 @@
 
 <div class="login-container">
     <img src="{% static 'images/logo.jpeg' %}" alt="ND Entrenamientos Logo">
-    <h2>Bienvenido a ND Entrenamientos</h2>
-    <p class="welcome-text">"El Cuerpo Alcanza Lo Que La Mente Cree. <br> Transforma tu esfuerzo en resultados. ¡Empieza hoy!</p>
+    <h2>Bienvenido a BUM BUM FITNESS FEM</h2>
+    <p class="welcome-text">“Un cuerpo fuerte, una mente fuerte.  <br>Tu mejor versión empieza hoy.”</p>
 
     <form method="POST">
         {% csrf_token %}
